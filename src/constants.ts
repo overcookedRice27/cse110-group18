@@ -47,6 +47,11 @@ export const COLORS = {
         BACKGROUND: "#D4D4D4",
         BORDER: "#222222",
     },
+    WIRE: {
+        BACKGROUND: "#222222",
+        POWERED: "#ff4500",
+        ELECTRICITY: "#ffcc00",
+    },
     BUTTON: {
         TEXT: "#222222",
         BACKGROUND: "#D4D4D4",

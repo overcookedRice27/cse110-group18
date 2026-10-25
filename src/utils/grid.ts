@@ -1,4 +1,3 @@
-
 import Konva from "konva";
 
 export function getRelativeGridCoordinate(
