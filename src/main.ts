@@ -6,7 +6,7 @@ import { drawGridLayer as createGridLayer } from "./grid";
 import { createWire, setWirePower } from "./wire";
 
 const stage = new Konva.Stage({
-    container: "app",
+    container: "game-screen",
     width: STAGE.WIDTH,
     height: STAGE.HEIGHT,
 });
