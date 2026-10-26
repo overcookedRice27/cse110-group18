@@ -1,0 +1,29 @@
+{
+  "name": "cse110-group18",
+  "version": "1.0.0",
+  "description": "cse110 group 18's assignment",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/overcookedRice27/cse110-group18.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/overcookedRice27/cse110-group18/issues"
+  },
+  "homepage": "https://github.com/overcookedRice27/cse110-group18#readme",
+  "dependencies": {
+    "konva": "^10.9.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}
