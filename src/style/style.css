@@ -13,12 +13,12 @@ body {
     min-height: 50vh;
 }
 
-#main-menu h1 {
+#title {
     font-size: 64px;
     margin-top: 20px;
 }
 
-#main-menu p {
+#title-descriptor p {
     font-size: 24px;
     margin-top: 20px;
 }
