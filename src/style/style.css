@@ -10,14 +10,15 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    min-height: 50vh;
 }
 
 #main-menu h1 {
     font-size: 64px;
-    margin-bottom: 10px;
+    margin-top: 20px;
 }
 
 #main-menu p {
     font-size: 24px;
+    margin-top: 20px;
 }
