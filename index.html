@@ -4,21 +4,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
     <link rel="stylesheet" href="/src/style/style.css">
     <title>Circuit Game</title>
 </head>
 
-<body>
-    <!-- main menu here-->
-    <main id="main-menu">
-        <h1 id="title">Circuit Game</h1>
-        <p id="title_descriptor">A logic gate puzzle game</p>
+<body class="bg-body-tertiary">
+    <main id="main-menu" class="text-center py-5">
+        <h1 id="title" class="display-1 text-center fw-bold mb-2">Circuit Game</h1>
+        <p id="title_descriptor" class="text-center text-body-secondary mb-5">A logic gate puzzle game</p>
+
+        <div class="d-grid gap-4 col-3 mx-auto" >
+            <button id="continue-btn" class="btn btn-primary py-3" type="button">Continue</button>
+            <button id="new-game-btn" class="btn btn-primary py-3" type="button">New Game</button>
+            <button id="mini-game-btn" class="btn btn-primary py-3" type="button">Mini Games</button>
+            <button id="settings-btn" class="btn btn-primary py-3" type="button">Settings</button>
+
+        </div>
     </main>
 
+    <main id="level-screen" class="text-center py-5" hidden>
+        <h1 class="display-1 text-center fw-bold mb-2">Levels</h1>
+        <p class="text-center text-body-secondary mb-5">Choose a level to continue</p>
+
+        <div class="container col-8 col-lg-6">
+            <div id="level-grid" class="row row-cols-5 g-3"></div>
+            <button id="back-to-menu-btn" class="btn btn-outline-secondary mt-5 px-5 py-2" type="button">Back</button>
+        </div>
+    </main>
+
+
     <!-- konva gameplay here -->
-    <div id="game-screen"></div>
-    <!-- <script type="module" src="/src/main.ts"></script>  enable later--> 
-     
+    <div id="game-screen" hidden></div>
+
+    <script type="module" src="src/html/dom-scripts.ts"></script>
+
 </body>
 
 </html>
