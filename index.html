@@ -32,58 +32,8 @@
         <p class="text-center text-body-secondary mb-5">Choose a level to continue</p>
 
         <div class="container col-8 col-lg-6">
-            <div class="row row-cols-5 g-3">
-                <div class="col">
-                    <div class="ratio ratio-1x1">
-                        <button id="level-1-btn" class="btn btn-primary d-flex align-items-center justify-content-center" type="button">Level 1</button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="ratio ratio-1x1">
-                        <button id="level-2-btn" class="btn btn-primary d-flex align-items-center justify-content-center" type="button">Level 2</button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="ratio ratio-1x1">
-                        <button id="level-3-btn" class="btn btn-primary d-flex align-items-center justify-content-center" type="button">Level 3</button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="ratio ratio-1x1">
-                        <button id="level-4-btn" class="btn btn-primary d-flex align-items-center justify-content-center" type="button">Level 4</button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="ratio ratio-1x1">
-                        <button id="level-5-btn" class="btn btn-primary d-flex align-items-center justify-content-center" type="button">Level 5</button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="ratio ratio-1x1">
-                        <button id="level-6-btn" class="btn btn-primary d-flex align-items-center justify-content-center" type="button">Level 6</button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="ratio ratio-1x1">
-                        <button id="level-7-btn" class="btn btn-primary d-flex align-items-center justify-content-center" type="button">Level 7</button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="ratio ratio-1x1">
-                        <button id="level-8-btn" class="btn btn-primary d-flex align-items-center justify-content-center" type="button">Level 8</button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="ratio ratio-1x1">
-                        <button id="level-9-btn" class="btn btn-primary d-flex align-items-center justify-content-center" type="button">Level 9</button>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="ratio ratio-1x1">
-                        <button id="level-10-btn" class="btn btn-primary d-flex align-items-center justify-content-center" type="button">Level 10</button>
-                    </div>
-                </div>
-            </div>
+            <div id="level-grid" class="row row-cols-5 g-3"></div>
+            <button id="back-to-menu-btn" class="btn btn-outline-secondary mt-5 px-5 py-2" type="button">Back</button>
         </div>
     </main>
 
@@ -91,7 +41,7 @@
     <!-- konva gameplay here -->
     <div id="game-screen" hidden></div>
 
-    <script defer src="src/dom-scripts.ts"></script>
+    <script type="module" src="src/dom-scripts.ts"></script>
 
 </body>
 

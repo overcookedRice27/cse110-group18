@@ -1,3 +1,31 @@
 body {
     margin: 0;
 }
+
+.level-select {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 0;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+}
+
+.level-select--finished {
+    background-color: var(--bs-success);
+    color: #fff;
+}
+
+.level-select--current {
+    background-color: var(--bs-primary);
+    color: #fff;
+}
+
+.level-select--locked {
+    background-color: var(--bs-secondary);
+    color: #fff;
+    opacity: 0.65;
+    cursor: not-allowed;
+}
