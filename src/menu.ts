@@ -4,27 +4,31 @@ import { createButton } from "./button";
 const stage = new Konva.Stage({
     container: "menu-screen",
     width: 1000,
-    height: 400,
+    height: 600,
 });
 
 const menu_screen = new Konva.Layer();
 stage.add(menu_screen);
 
-// Reuse existing buttons
-const playButton = createButton("Play");
-const levelsButton = createButton("Level Select");
-const howToButton = createButton("How To Play");
+//reuse existing buttons
+const newGameButton = createButton("New Game");
+const continueButton = createButton("Continue");
+const minigamesButton = createButton("Minigames");
+const settingsButton = createButton("Settings");
 
-// Position buttons
-playButton.position({ x: 400, y: 40 });
-levelsButton.position({ x: 400, y: 140 });
-howToButton.position({ x: 400, y: 240 });
+//position buttons
+newGameButton.position({ x: 400, y: 100 });
+continueButton.position({ x: 400, y: 200});
+minigamesButton.position({ x: 400, y: 300 });
+settingsButton.position({ x: 400, y: 400 });
 
-// Temporary test functionality
-playButton.on("click", () => {alert("play alert");});   //dummy testing
+//Temporary test functionality, implement screen switching later
+newGameButton.on("click", () => {alert("new game alert");});   //dummy testing
 
-levelsButton.on("click", () => {alert("level select alert");});
+continueButton.on("click", () => {alert("continue alert");});
 
-howToButton.on("click", () => {alert("how to play alert");});
+minigamesButton.on("click", () => {alert("minigamesalert");});
 
-menu_screen.add(playButton, levelsButton, howToButton);
+settingsButton.on("click", () => {alert("settings alert");});
+
+menu_screen.add(newGameButton, continueButton, minigamesButton, settingsButton);
