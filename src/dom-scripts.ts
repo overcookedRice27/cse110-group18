@@ -10,6 +10,7 @@ const settingsBtn = document.getElementById(
 ) as HTMLButtonElement;
 
 const mainMenuScreen = document.getElementById("main-menu") as HTMLElement;
+const levelScreen = document.getElementById("level-screen") as HTMLElement;
 const gameScreen = document.getElementById("game-screen") as HTMLDivElement;
 
 // 2. Attach Click Event Listeners
@@ -18,7 +19,8 @@ newGameBtn.addEventListener("click", () => {
 });
 
 continueBtn.addEventListener("click", () => {
-    alert("Checking for local save data...");
+    mainMenuScreen.hidden = true;
+    levelScreen.hidden = false;
 });
 
 miniGameBtn.addEventListener("click", () => {
