@@ -1,44 +1,32 @@
-import Konva from "konva";
 import { COLORS, BUTTON } from "./constants";
 
 const buttonDimensions = {
     width: BUTTON.WIDTH,
     height: BUTTON.HEIGHT,
 };
-
-export function createButton(
+//html buttons in html (cleaner, doesn't need rendering, controlled by browser)
+export function createButton( //factory function (can reuse already configured object)
     name: string,
     dimension = buttonDimensions,
-): Konva.Group {
-    const buttonGroup = new Konva.Group();
 
-    const background = new Konva.Rect({
-        size: dimension,
-        cornerRadius: 12,
-        fill: COLORS.BUTTON.BACKGROUND,
-        stroke: COLORS.BUTTON.BORDER,
-        strokeWidth: 2,
+): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = name;
+
+    Object.assign(button.style, { //adding bootstrap later
+         width: `${dimension.width}px`,
+        height: `${dimension.height}px`,
+        borderRadius: "12px",
+        background: COLORS.BUTTON.BACKGROUND,
+        border: `2px solid ${COLORS.BUTTON.BORDER}`,
+        color: COLORS.BUTTON.TEXT,
+        fontSize: "30px",
+        textAlign: "center",
+        cursor: "pointer", // replaces the mouseover/mouseout handlers
+        boxSizing: "border-box",
     });
 
-    const label = new Konva.Text({
-        text: name,
-        size: dimension,
-        fontSize: 30,
-        fill: COLORS.BUTTON.TEXT,
-        align: "center",
-        verticalAlign: "middle",
-    });
-
-    buttonGroup.add(background);
-    buttonGroup.add(label);
-
-    buttonGroup.on("mouseover", function () {
-        document.body.style.cursor = "pointer";
-    });
-
-    buttonGroup.on("mouseout", function () {
-        document.body.style.cursor = "default";
-    });
-
-    return buttonGroup;
+    return button;
 }
+
