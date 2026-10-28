@@ -8,9 +8,14 @@ body {
 #main-menu {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    min-height: 50vh;
+    text-align: center;
+    min-height: 100vh;
+}
+
+#menu-screen {
+    width: 1000px;
+    max-width: 100%;
 }
 
 #title {
