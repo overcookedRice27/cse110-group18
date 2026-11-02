@@ -1,7 +1,14 @@
 import Konva from "konva";
 import { createGate, gateCells } from "../gate";
 import { LevelData } from "./levelData";
-import { createWire, updateWireAndNeighbors } from "../wire";
+import {
+    createBlock,
+    createExit,
+    createInput,
+    createWire,
+    updateWireAndNeighbors,
+    updateWireElectricity,
+} from "../wire";
 import { placeElement } from "../utils/circuitGrid";
 
 export function loadLevel(grid: Konva.Layer, level: LevelData): void {
@@ -10,10 +17,19 @@ export function loadLevel(grid: Konva.Layer, level: LevelData): void {
         let size: { width: number; height: number };
 
         if (piece.type === "gate") {
-            element = createGate(piece.gateType);
+            element = createGate(piece.gateType, piece.fixed === true);
             size = gateCells;
+        } else if (piece.type === "input") {
+            element = createInput(piece.on);
+            size = { width: 1, height: 1 };
+        } else if (piece.type === "exit") {
+            element = createExit();
+            size = { width: 1, height: 1 };
+        } else if (piece.type === "block") {
+            element = createBlock();
+            size = { width: 1, height: 1 };
         } else {
-            element = createWire();
+            element = createWire("cross", piece.fixed === true);
             size = { width: 1, height: 1 };
         }
 
@@ -30,4 +46,5 @@ export function loadLevel(grid: Konva.Layer, level: LevelData): void {
             updateWireAndNeighbors(piece.x, piece.y);
         }
     }
+    updateWireElectricity();
 }

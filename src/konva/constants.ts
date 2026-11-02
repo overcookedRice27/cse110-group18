@@ -1,14 +1,36 @@
 const STAGE_WIDTH = 1000;
 const STAGE_HEIGHT = 600;
 
-export const LEVEL_CREATOR_MODE = true;
+export let LEVEL_CREATOR_MODE = true;
+
+export function setCreatorMode(enabled: boolean): void {
+    LEVEL_CREATOR_MODE = enabled;
+}
 
 export const CREATOR_PANEL = {
     X: 0,
     Y: 40,
     WIDTH: 168,
-    HEIGHT: 355,
+    HEIGHT: 430,
+    PLAYER_HEIGHT: 274,
     PADDING: 10,
+    ITEM_HEIGHT: 45,
+    ITEM_SPACING: 52,
+    ITEM_FONT_SIZE: 24,
+    ITEM_CORNER_RADIUS: 8,
+    BORDER_WIDTH: 2,
+    BORDER_RADIUS: 10,
+    CREATOR_ITEMS: [
+        "Input",
+        "Exit",
+        "Wire",
+        "Block",
+        "AND",
+        "OR",
+        "NOT",
+        "XOR",
+    ] as const,
+    PLAYER_ITEMS: ["Wire", "AND", "OR", "NOT", "XOR"] as const,
 };
 
 export const STAGE = {

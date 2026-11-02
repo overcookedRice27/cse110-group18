@@ -1,6 +1,9 @@
 import Konva from "konva";
-import { COLORS, GRID } from "./constants";
-import { getRelativeGridCoordinate, isPointerOverCreatorPanel } from "./utils/grid";
+import { COLORS, GRID, LEVEL_CREATOR_MODE } from "./constants";
+import {
+    getRelativeGridCoordinate,
+    isPointerOverCreatorPanel,
+} from "./utils/grid";
 import { clamp } from "./utils/math";
 import { placeElement, removeElement } from "./utils/circuitGrid";
 import { refreshGateConnections, updateWireElectricity } from "./wire";
@@ -13,13 +16,14 @@ const gateDimensions = {
     height: GRID.CELL_SIZE * gateCells.height,
 };
 
-export function createGate(name: GateType): Konva.Group {
+export function createGate(name: GateType, fixed = false): Konva.Group {
     const gateGroup = new Konva.Group({
-        draggable: true,
+        draggable: LEVEL_CREATOR_MODE || !fixed,
     });
 
     gateGroup.setAttr("elementType", "gate");
     gateGroup.setAttr("gateType", name);
+    gateGroup.setAttr("fixed", fixed);
 
     const background = new Konva.Rect({
         size: gateDimensions,
@@ -48,14 +52,35 @@ export function createGate(name: GateType): Konva.Group {
             listening: false,
         });
 
-    // NEW: Two inputs on the left, one output on the right.
+    // NOT uses only the top input pin.
     gateGroup.add(
         background,
         label,
         pin(0, GRID.CELL_SIZE * 0.5),
-        pin(0, GRID.CELL_SIZE * 2.5),
         pin(gateDimensions.width, GRID.CELL_SIZE * 1.5),
     );
+    if (name !== "NOT") {
+        gateGroup.add(pin(0, GRID.CELL_SIZE * 2.5));
+    }
+    const fixedLabel = new Konva.Text({
+        name: "fixedLabel",
+        text: "Fixed",
+        x: 5,
+        y: 5,
+        fontSize: 12,
+        fill: COLORS.BUTTON.TEXT,
+        visible: fixed,
+        listening: false,
+    });
+    gateGroup.add(fixedLabel);
+
+    gateGroup.on("click", () => {
+        if (!LEVEL_CREATOR_MODE || gateGroup.getAttr("gridX") === undefined)
+            return;
+        const fixed = !gateGroup.getAttr("fixed");
+        gateGroup.setAttr("fixed", fixed);
+        fixedLabel.visible(fixed);
+    });
 
     gateGroup.on("mouseover", () => {
         document.body.style.cursor = "grab";
@@ -84,6 +109,7 @@ export function createGate(name: GateType): Konva.Group {
             if (oldX !== undefined && oldY !== undefined) {
                 refreshGateConnections(oldX, oldY);
             }
+            updateWireElectricity();
             return;
         }
 
@@ -97,7 +123,10 @@ export function createGate(name: GateType): Konva.Group {
             GRID.CELL_SIZE,
         );
 
-        if (!gridCoord) return;
+        if (!gridCoord) {
+            gateGroup.position(dragStartPosition);
+            return;
+        }
 
         const newGateCoordinate = {
             x: clamp(
@@ -133,6 +162,7 @@ export function createGate(name: GateType): Konva.Group {
         }
 
         refreshGateConnections(newGateCoordinate.x, newGateCoordinate.y);
+        updateWireElectricity();
     });
 
     gateGroup.on("mouseout", () => {

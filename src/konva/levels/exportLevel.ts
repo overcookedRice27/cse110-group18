@@ -2,7 +2,7 @@ import Konva from "konva";
 import { circuitGrid } from "../utils/circuitGrid";
 import type { GateType, LevelData, LevelPiece } from "./levelData";
 
-export function exportLevel(id: number): void {
+export function getLevelData(id: number): LevelData {
     const pieces: LevelPiece[] = [];
     const visited = new Set<Konva.Group>();
 
@@ -16,14 +16,27 @@ export function exportLevel(id: number): void {
 
             if (element.getAttr("elementType") === "gate") {
                 const gateType = element.getAttr("gateType") as GateType;
-                pieces.push({ type: "gate", gateType, x, y });
+                const fixed = element.getAttr("fixed") === true;
+                pieces.push({ type: "gate", gateType, fixed, x, y });
             } else if (element.getAttr("elementType") === "wire") {
-                pieces.push({ type: "wire", x, y });
+                const fixed = element.getAttr("fixed") === true;
+                pieces.push({ type: "wire", fixed, x, y });
+            } else if (element.getAttr("elementType") === "input") {
+                const on = element.getAttr("powerSource") === true;
+                pieces.push({ type: "input", on, x, y });
+            } else if (element.getAttr("elementType") === "exit") {
+                pieces.push({ type: "exit", x, y });
+            } else if (element.getAttr("elementType") === "block") {
+                pieces.push({ type: "block", x, y });
             }
         }
     }
 
-    const level: LevelData = { id, pieces };
+    return { id, pieces };
+}
+
+export function exportLevel(id: number): void {
+    const level = getLevelData(id);
     const json = JSON.stringify(level, null, 4);
     const file = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(file);
