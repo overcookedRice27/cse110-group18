@@ -2,6 +2,18 @@ const SAVE_KEY = "logicGame.save"; //data stored in localStorage
 const SAVE_VERSION = 1;
 const TOTAL_LEVELS = 5;
 
+// Detect any local game save, including one that fails progress validation.
+export function hasLocalSave(): boolean
+{
+    return localStorage.getItem(SAVE_KEY) !== null;
+}
+
+// Clear only the game's save after the player confirms starting over.
+export function clearLocalSave(): void
+{
+    localStorage.removeItem(SAVE_KEY);
+}
+
 export function hasProgress(): boolean {
     try {
         const raw = localStorage.getItem(SAVE_KEY); //retrieves prev game data from local storage

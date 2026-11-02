@@ -28,6 +28,15 @@
         </div>
     </main>
 
+    <dialog id="new-game-dialog" class="border-0 rounded p-4" aria-labelledby="new-game-title" aria-describedby="new-game-description">
+        <h2 id="new-game-title" class="h4">Start a new game?</h2>
+        <p id="new-game-description">A local save was found. Starting a new game will erase your saved progress. Continue?</p>
+        <form method="dialog" class="d-flex justify-content-end gap-2">
+            <button class="btn btn-secondary" value="cancel" autofocus>Cancel</button>
+            <button class="btn btn-danger" value="overwrite">Overwrite and start</button>
+        </form>
+    </dialog>
+
     <main id="level-screen" class="text-center py-5" hidden>
         <h1 class="display-1 text-center fw-bold mb-2">Levels</h1>
         <p class="text-center text-body-secondary mb-5">Choose a level to continue</p>

@@ -12,6 +12,15 @@ const levels: Level[] = Array.from({ length: LEVEL_COUNT }, (_, index) => ({
     state: index === 0 ? "current" : "locked",
 }));
 
+// Restore initial level availability when starting a new game.
+export function resetLevels(): void
+{
+    for (const level of levels)
+    {
+        level.state = level.id === 1 ? "current" : "locked";
+    }
+}
+
 function createLevelButton(level: Level): HTMLDivElement {
     const col = document.createElement("div");
     col.className = "col";
