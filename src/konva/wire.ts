@@ -1,15 +1,23 @@
 import Konva from "konva";
-import { COLORS, GRID } from "./constants";
-import { getRelativeGridCoordinate } from "./utils/grid";
-import { circuitGrid, placeElement } from "./utils/circuitGrid";
+import { COLORS, GRID, LEVEL_CREATOR_MODE } from "./constants";
+import {
+    getRelativeGridCoordinate,
+    isPointerOverCreatorPanel,
+} from "./utils/grid";
+import { circuitGrid, placeElement, removeElement } from "./utils/circuitGrid";
+import { calculateGateOutput } from "./gateLogic";
+import type { GateType } from "./levels/levelData";
 
 export type WireShape = "straight" | "corner" | "tee" | "cross";
 
 type GridCoordinate = { x: number; y: number };
 
-export function createWire(shape: WireShape = "cross"): Konva.Group {
+export function createWire(
+    shape: WireShape = "cross",
+    fixed = false,
+): Konva.Group {
     const wireGroup = new Konva.Group({
-        draggable: true,
+        draggable: LEVEL_CREATOR_MODE || !fixed,
     });
 
     wireGroup.setAttrs({
@@ -18,12 +26,50 @@ export function createWire(shape: WireShape = "cross"): Konva.Group {
         powered: false,
         gridWidth: 1,
         gridHeight: 1,
+        fixed,
     });
 
     redrawWire(wireGroup, []);
+    wireGroup.add(
+        new Konva.Text({
+            name: "fixedLabel",
+            text: "Fixed",
+            x: 2,
+            y: 2,
+            fontSize: 12,
+            fill: COLORS.BUTTON.TEXT,
+            visible: fixed,
+            listening: false,
+        }),
+    );
 
     wireGroup.on("mouseover", () => {
         document.body.style.cursor = "grab";
+    });
+
+    // Inputs use the same placement and dragging behavior as wires.
+    wireGroup.on("click", () => {
+        if (
+            wireGroup.getAttr("elementType") === "wire" &&
+            LEVEL_CREATOR_MODE &&
+            wireGroup.getAttr("gridX") !== undefined
+        ) {
+            const fixed = !wireGroup.getAttr("fixed");
+            wireGroup.setAttr("fixed", fixed);
+            wireGroup.findOne(".fixedLabel")?.visible(fixed);
+            return;
+        }
+        if (
+            wireGroup.getAttr("elementType") !== "input" ||
+            wireGroup.getAttr("gridX") === undefined
+        )
+            return;
+        const on = !wireGroup.getAttr("powerSource");
+        wireGroup.setAttr("powerSource", on);
+        (wireGroup.findOne(".inputLabel") as Konva.Text).text(
+            on ? "ON" : "OFF",
+        );
+        updateWireElectricity();
     });
 
     wireGroup.on("dragstart", () => {
@@ -35,7 +81,8 @@ export function createWire(shape: WireShape = "cross"): Konva.Group {
         if (x === undefined || y === undefined) return;
 
         // Remove the wire from its original grid position.
-        removeWireFromGrid(wireGroup);
+        removeElement(wireGroup);
+        updateWireElectricity();
 
         // Reset the moving wire to its isolated appearance.
         redrawWire(wireGroup, []);
@@ -48,6 +95,11 @@ export function createWire(shape: WireShape = "cross"): Konva.Group {
     });
 
     wireGroup.on("dragend", () => {
+        if (isPointerOverCreatorPanel(wireGroup)) {
+            wireGroup.destroy();
+            return;
+        }
+
         const gridCoord = getWireGridCoordinate(wireGroup);
         const oldX = wireGroup.getAttr("gridX");
         const oldY = wireGroup.getAttr("gridY");
@@ -55,6 +107,7 @@ export function createWire(shape: WireShape = "cross"): Konva.Group {
         if (!gridCoord) {
             restorePosition(wireGroup);
             refreshOldPosition(oldX, oldY);
+            updateWireElectricity();
             return;
         }
 
@@ -63,12 +116,14 @@ export function createWire(shape: WireShape = "cross"): Konva.Group {
         if (!placed) {
             restorePosition(wireGroup);
             refreshOldPosition(oldX, oldY);
+            updateWireElectricity();
             return;
         }
 
         // Refresh both the new and previous positions after placement.
         updateWireAndNeighbors(gridCoord.x, gridCoord.y);
         refreshOldPosition(oldX, oldY);
+        updateWireElectricity();
     });
 
     wireGroup.on("mouseout", () => {
@@ -78,14 +133,75 @@ export function createWire(shape: WireShape = "cross"): Konva.Group {
     return wireGroup;
 }
 
-function removeWireFromGrid(wire: Konva.Group): void {
-    for (let y = 0; y < circuitGrid.length; y++) {
-        for (let x = 0; x < circuitGrid[y].length; x++) {
-            if (circuitGrid[y][x] === wire) {
-                circuitGrid[y][x] = null;
-            }
-        }
-    }
+export function createInput(on = false): Konva.Group {
+    const input = createWire();
+    input.draggable(LEVEL_CREATOR_MODE);
+    input.destroyChildren();
+    input.setAttrs({ elementType: "input", powerSource: on });
+    input.add(
+        new Konva.Rect({
+            width: GRID.CELL_SIZE,
+            height: GRID.CELL_SIZE,
+            fill: COLORS.BUTTON.BACKGROUND,
+            stroke: COLORS.BUTTON.BORDER,
+            strokeWidth: 2,
+            cornerRadius: 8,
+        }),
+        new Konva.Text({
+            name: "inputLabel",
+            text: on ? "ON" : "OFF",
+            width: GRID.CELL_SIZE,
+            height: GRID.CELL_SIZE,
+            fontSize: 20,
+            align: "center",
+            verticalAlign: "middle",
+        }),
+    );
+    return input;
+}
+
+export function createExit(): Konva.Group {
+    const exit = createWire();
+    exit.draggable(LEVEL_CREATOR_MODE);
+    exit.destroyChildren();
+    exit.setAttrs({ elementType: "exit", powered: false });
+    exit.add(
+        new Konva.Rect({
+            width: GRID.CELL_SIZE,
+            height: GRID.CELL_SIZE,
+            fill: COLORS.BUTTON.BACKGROUND,
+            stroke: COLORS.BUTTON.BORDER,
+            strokeWidth: 2,
+            cornerRadius: 8,
+        }),
+        new Konva.Text({
+            name: "exitLabel",
+            text: "EXIT\nOFF",
+            width: GRID.CELL_SIZE,
+            height: GRID.CELL_SIZE,
+            fontSize: 18,
+            align: "center",
+            verticalAlign: "middle",
+        }),
+    );
+    return exit;
+}
+
+export function createBlock(): Konva.Group {
+    const block = createWire();
+    block.draggable(LEVEL_CREATOR_MODE);
+    block.destroyChildren();
+    block.setAttr("elementType", "block");
+    block.add(
+        new Konva.Rect({
+            width: GRID.CELL_SIZE,
+            height: GRID.CELL_SIZE,
+            fill: "#888888",
+            stroke: COLORS.BUTTON.BORDER,
+            strokeWidth: 2,
+        }),
+    );
+    return block;
 }
 
 function getWireGridCoordinate(wireGroup: Konva.Group): GridCoordinate | null {
@@ -136,7 +252,7 @@ type WirePreview = {
     y: number;
 };
 
-function updateWireAndNeighbors(
+export function updateWireAndNeighbors(
     x: number,
     y: number,
     preview?: WirePreview,
@@ -170,7 +286,12 @@ function isWireAt(
     }
 
     const element = circuitGrid[y]?.[x];
-    if (element?.getAttr("elementType") === "wire") return true;
+    if (
+        element?.getAttr("elementType") === "wire" ||
+        element?.getAttr("elementType") === "input" ||
+        element?.getAttr("elementType") === "exit"
+    )
+        return true;
     if (element?.getAttr("elementType") !== "gate") return false;
 
     const relativeX = x - element.getAttr("gridX");
@@ -178,7 +299,8 @@ function isWireAt(
     return (
         (gateSide === "left" &&
             relativeX === 0 &&
-            (relativeY === 0 || relativeY === 2)) ||
+            (relativeY === 0 ||
+                (relativeY === 2 && element.getAttr("gateType") !== "NOT"))) ||
         (gateSide === "right" && relativeX === 1 && relativeY === 1)
     );
 }
@@ -220,6 +342,7 @@ function redrawWireAt(x: number, y: number, preview?: WirePreview): void {
 }
 
 function redrawWire(wireGroup: Konva.Group, connections: string[]): void {
+    if (wireGroup.getAttr("elementType") !== "wire") return;
     const half = GRID.CELL_SIZE / 2;
     const size = GRID.CELL_SIZE;
 
@@ -321,40 +444,127 @@ export function setWirePower(wireGroup: Konva.Group, turnOn: boolean): void {
 }
 
 export function updateWireElectricity(): void {
-    const visited = new Set<Konva.Group>();
     const sources: Konva.Group[] = [];
+    const exits: Konva.Group[] = [];
+    const gates = new Set<Konva.Group>();
 
-    // Reset all wires and remember power sources.
+    // Gates occupy several cells, so keep each gate only once.
     for (const row of circuitGrid) {
-        for (const wire of row) {
-            if (wire?.getAttr("elementType") !== "wire") continue;
-
-            if (wire.getAttr("powerSource")) {
-                sources.push(wire);
+        for (const element of row) {
+            if (
+                element?.getAttr("elementType") === "input" &&
+                element.getAttr("powerSource")
+            ) {
+                sources.push(element);
             }
-
-            setWirePower(wire, false);
+            if (element?.getAttr("elementType") === "gate") gates.add(element);
+            if (element?.getAttr("elementType") === "exit") exits.push(element);
         }
     }
 
-    // Spread electricity to adjacent wires.
-    function power(x: number, y: number): void {
-        const wire = circuitGrid[y]?.[x];
+    // Recalculate from the inputs rather than keeping old gate outputs.
+    for (const gate of gates) gate.setAttr("outputPowered", false);
 
-        if (wire?.getAttr("elementType") !== "wire" || visited.has(wire))
+    function updateWires(): void {
+        const visited = new Set<Konva.Group>();
+        for (const row of circuitGrid) {
+            for (const element of row) {
+                if (element?.getAttr("elementType") === "wire")
+                    setWirePower(element, false);
+            }
+        }
+
+        function power(x: number, y: number): void {
+            const wire = circuitGrid[y]?.[x];
+            if (wire?.getAttr("elementType") !== "wire" || visited.has(wire))
+                return;
+
+            visited.add(wire);
+            setWirePower(wire, true);
+            power(x + 1, y);
+            power(x - 1, y);
+            power(x, y + 1);
+            power(x, y - 1);
+        }
+
+        for (const source of sources) {
+            const x = source.getAttr("gridX");
+            const y = source.getAttr("gridY");
+            power(x + 1, y);
+            power(x - 1, y);
+            power(x, y + 1);
+            power(x, y - 1);
+        }
+        for (const gate of gates) {
+            if (gate.getAttr("outputPowered")) {
+                power(gate.getAttr("gridX") + 2, gate.getAttr("gridY") + 1);
+            }
+        }
+    }
+
+    function inputIsPowered(x: number, y: number): boolean {
+        const element = circuitGrid[y]?.[x];
+        if (element?.getAttr("elementType") === "wire")
+            return element.getAttr("powered") === true;
+        if (element?.getAttr("elementType") === "input")
+            return element.getAttr("powerSource") === true;
+        return false;
+    }
+
+    function updateExits(): void {
+        for (const exit of exits) {
+            const x = exit.getAttr("gridX");
+            const y = exit.getAttr("gridY");
+            const neighbors = [
+                circuitGrid[y]?.[x - 1],
+                circuitGrid[y]?.[x + 1],
+                circuitGrid[y - 1]?.[x],
+                circuitGrid[y + 1]?.[x],
+            ];
+            const powered = neighbors.some(
+                (element) =>
+                    element?.getAttr("elementType") === "wire" &&
+                    element.getAttr("powered") === true,
+            );
+            exit.setAttr("powered", powered);
+            const label = exit.findOne(".exitLabel") as Konva.Text;
+            if (powered) {
+                label.text("EXIT\nON");
+            } else {
+                label.text("EXIT\nOFF");
+            }
+        }
+    }
+
+    // Each pass can carry a signal through one more gate.
+    for (let pass = 0; pass <= gates.size; pass++) {
+        updateWires();
+        const outputs = new Map<Konva.Group, boolean>();
+        let changed = false;
+        for (const gate of gates) {
+            const x = gate.getAttr("gridX");
+            const y = gate.getAttr("gridY");
+            const output = calculateGateOutput(
+                gate.getAttr("gateType") as GateType,
+                inputIsPowered(x - 1, y),
+                inputIsPowered(x - 1, y + 2),
+            );
+            outputs.set(gate, output);
+            if (output !== gate.getAttr("outputPowered")) changed = true;
+        }
+        if (!changed) {
+            updateExits();
             return;
-
-        visited.add(wire);
-        setWirePower(wire, true);
-
-        power(x + 1, y);
-        power(x - 1, y);
-        power(x, y + 1);
-        power(x, y - 1);
+        }
+        for (const [gate, output] of outputs)
+            gate.setAttr("outputPowered", output);
     }
 
-    // Start spreading from each power source.
-    for (const source of sources) {
-        power(source.getAttr("gridX"), source.getAttr("gridY"));
-    }
+    // Feedback loops are not supported yet; leave only input-powered wires on.
+    for (const gate of gates) gate.setAttr("outputPowered", false);
+    updateWires();
+    updateExits();
+    console.warn(
+        "Circuit did not settle. Feedback loops are not supported yet.",
+    );
 }

@@ -2,6 +2,11 @@ body {
     margin: 0;
 }
 
+#game-screen {
+    width: fit-content;
+    margin: 0 auto;
+}
+
 .level-select {
     width: 100%;
     aspect-ratio: 1 / 1;
