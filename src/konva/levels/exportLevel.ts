@@ -4,6 +4,7 @@ import type { GateType, LevelData, LevelPiece } from "./levelData";
 
 export function getLevelData(id: number): LevelData {
     const pieces: LevelPiece[] = [];
+    // A gate appears in every cell it occupies, but is exported only once.
     const visited = new Set<Konva.Group>();
 
     for (const row of circuitGrid) {

@@ -12,6 +12,7 @@ import {
 import { placeElement } from "../utils/circuitGrid";
 
 export function loadLevel(grid: Konva.Layer, level: LevelData): void {
+    // Place all pieces before updating connections so every neighbor is present.
     for (const piece of level.pieces) {
         let element: Konva.Group;
         let size: { width: number; height: number };

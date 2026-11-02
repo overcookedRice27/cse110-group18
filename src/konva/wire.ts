@@ -541,7 +541,8 @@ export function updateWireElectricity(): void {
         }
     }
 
-    // Each pass can carry a signal through one more gate.
+    // Each pass can carry a signal through one more gate. Gate outputs are
+    // applied together so the result does not depend on the order of the grid.
     for (let pass = 0; pass <= gates.size; pass++) {
         updateWires();
         const outputs = new Map<Konva.Group, boolean>();
