@@ -1,0 +1,47 @@
+{
+    "id": 1,
+    "pieces": [
+        {
+            "type": "input",
+            "on": true,
+            "x": 1,
+            "y": 2
+        },
+        {
+            "type": "wire",
+            "fixed": false,
+            "x": 2,
+            "y": 2
+        },
+        {
+            "type": "gate",
+            "gateType": "NOT",
+            "fixed": false,
+            "x": 3,
+            "y": 2
+        },
+        {
+            "type": "wire",
+            "fixed": false,
+            "x": 6,
+            "y": 2
+        },
+        {
+            "type": "exit",
+            "x": 7,
+            "y": 2
+        },
+        {
+            "type": "wire",
+            "fixed": false,
+            "x": 5,
+            "y": 3
+        },
+        {
+            "type": "wire",
+            "fixed": false,
+            "x": 6,
+            "y": 3
+        }
+    ]
+}
