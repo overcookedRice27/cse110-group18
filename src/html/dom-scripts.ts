@@ -16,6 +16,7 @@ const continueBtn = document.getElementById(
     "continue-btn",
 ) as HTMLButtonElement;
 const newGameBtn = document.getElementById("new-game-btn") as HTMLButtonElement;
+const levelsBtn = document.getElementById("levels-btn") as HTMLButtonElement;
 const miniGameBtn = document.getElementById(
     "mini-game-btn",
 ) as HTMLButtonElement;
@@ -102,6 +103,10 @@ continueBtn.addEventListener("click", () => {
     {
         restoreProgress(saved.highestCompleted);
     }
+    showLevelScreen();
+});
+
+levelsBtn.addEventListener("click", () => {
     showLevelScreen();
 });
 

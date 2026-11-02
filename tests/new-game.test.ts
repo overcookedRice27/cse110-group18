@@ -36,7 +36,7 @@ describe("new game", () =>
     elements.clear();
     entries.clear();
     for (const id of [
-      "continue-btn", "new-game-btn", "mini-game-btn",
+      "continue-btn", "new-game-btn", "levels-btn", "mini-game-btn",
       "settings-btn", "level-creator-btn", "back-to-menu-btn", "game-back-btn",
       "main-menu", "level-screen", "level-grid", "game-view",
     ])
@@ -78,6 +78,15 @@ describe("new game", () =>
     expect(elements.get("main-menu")!.hidden).toBe(true);
     expect(elements.get("level-screen")!.hidden).toBe(true);
     expect(alertNotice).not.toHaveBeenCalled();
+  });
+
+  it("opens the level selection screen when Levels is clicked", () =>
+  {
+    elements.get("levels-btn")!.dispatchEvent(new Event("click"));
+    expect(elements.get("main-menu")!.hidden).toBe(true);
+    expect(elements.get("level-screen")!.hidden).toBe(false);
+    expect(elements.get("game-view")!.hidden).toBe(true);
+    expect(elements.get("level-grid")!.children).toHaveLength(10);
   });
 
   it("automatically restores saved progress and opens the saved level", async () =>
