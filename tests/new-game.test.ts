@@ -36,7 +36,7 @@ describe("new game", () =>
     elements.clear();
     entries.clear();
     for (const id of [
-      "continue-btn", "new-game-btn", "new-game-dialog", "mini-game-btn",
+      "continue-btn", "new-game-btn", "mini-game-btn",
       "settings-btn", "level-creator-btn", "back-to-menu-btn", "game-back-btn",
       "main-menu", "level-screen", "level-grid", "game-view",
     ])
@@ -71,71 +71,48 @@ describe("new game", () =>
     expect(elements.get("main-menu")!.hidden).toBe(true);
     expect(elements.get("level-screen")!.hidden).toBe(false);
     expect(elements.get("level-grid")!.children).toHaveLength(10);
-    expect(elements.get("new-game-dialog")!.showModal).not.toHaveBeenCalled();
     expect(alertNotice).not.toHaveBeenCalled();
   });
 
-  it("detects an existing save and opens confirmation over the main menu", () =>
+  it("automatically restores saved progress and opens the saved level", async () =>
   {
-    entries.set("logicGame.save", JSON.stringify({ version: 1, highestCompleted: 2 }));
+    const showPlayerLevel = vi.fn().mockResolvedValue(undefined);
+    vi.doMock("../src/konva/main", () => ({ showPlayerLevel }));
+    const level = { id: 2, pieces: [] };
+    const raw = JSON.stringify({ version: 1, highestCompleted: 1, level });
+    entries.set("logicGame.save", raw);
     elements.get("new-game-btn")!.dispatchEvent(new Event("click"));
-    expect(getItem).toHaveBeenCalledWith("logicGame.save");
-    expect(elements.get("new-game-dialog")!.showModal).toHaveBeenCalledOnce();
-    expect(elements.get("main-menu")!.hidden).toBe(false);
-    expect(elements.get("level-screen")!.hidden).toBe(true);
-    expect(removeItem).not.toHaveBeenCalled();
-  });
-
-  it("clears the save and opens level selection after overwrite confirmation", () =>
-  {
-    entries.set("logicGame.save", JSON.stringify({ version: 1, highestCompleted: 2 }));
-    elements.get("new-game-btn")!.dispatchEvent(new Event("click"));
-    const dialog = elements.get("new-game-dialog")!;
-    dialog.returnValue = "overwrite";
-    dialog.dispatchEvent(new Event("close"));
-    expect(removeItem).toHaveBeenCalledWith("logicGame.save");
-    expect(entries.has("logicGame.save")).toBe(false);
-    expect(elements.get("level-screen")!.hidden).toBe(false);
+    await vi.waitFor(() =>
+    {
+      expect(elements.get("game-view")!.hidden).toBe(false);
+    });
+    expect(showPlayerLevel).toHaveBeenCalledWith(level);
     expect(elements.get("main-menu")!.hidden).toBe(true);
-  });
-
-  it("keeps the save and main menu when confirmation is cancelled", () =>
-  {
-    entries.set("logicGame.save", JSON.stringify({ version: 1, highestCompleted: 2 }));
-    elements.get("new-game-btn")!.dispatchEvent(new Event("click"));
-    elements.get("new-game-dialog")!.dispatchEvent(new Event("close"));
-    expect(removeItem).not.toHaveBeenCalled();
-    expect(elements.get("main-menu")!.hidden).toBe(false);
     expect(elements.get("level-screen")!.hidden).toBe(true);
+    expect(entries.get("logicGame.save")).toBe(raw);
+    expect(removeItem).not.toHaveBeenCalled();
+    expect(alertNotice).not.toHaveBeenCalled();
   });
 
-  it("shows the save-check error notice when local storage cannot be read", () =>
+  it("reports invalid saves without deleting them or leaving the menu", () =>
+  {
+    entries.set("logicGame.save", "invalid json");
+    elements.get("new-game-btn")!.dispatchEvent(new Event("click"));
+    expect(alertNotice).toHaveBeenCalledWith("Unable to load your local save. The save is invalid or incompatible.");
+    expect(elements.get("main-menu")!.hidden).toBe(false);
+    expect(elements.get("game-view")!.hidden).toBe(true);
+    expect(removeItem).not.toHaveBeenCalled();
+  });
+
+  it("reports storage read errors without leaving the menu", () =>
   {
     getItem.mockImplementation(() =>
     {
       throw new Error("Storage unavailable");
     });
     elements.get("new-game-btn")!.dispatchEvent(new Event("click"));
-    expect(alertNotice).toHaveBeenCalledWith("Unable to check your local save. Check your browser storage settings and try again.");
-    expect(elements.get("new-game-dialog")!.showModal).not.toHaveBeenCalled();
+    expect(alertNotice).toHaveBeenCalledWith("Unable to load your local save. Check your browser storage settings and try again.");
     expect(elements.get("main-menu")!.hidden).toBe(false);
-    expect(elements.get("level-screen")!.hidden).toBe(true);
-  });
-
-  it("shows the clear-save error notice and preserves the menu if deletion fails", () =>
-  {
-    entries.set("logicGame.save", JSON.stringify({ version: 1, highestCompleted: 2 }));
-    elements.get("new-game-btn")!.dispatchEvent(new Event("click"));
-    removeItem.mockImplementation(() =>
-    {
-      throw new Error("Storage unavailable");
-    });
-    const dialog = elements.get("new-game-dialog")!;
-    dialog.returnValue = "overwrite";
-    dialog.dispatchEvent(new Event("close"));
-    expect(alertNotice).toHaveBeenCalledWith("Unable to clear your local save. Check your browser storage settings and try again.");
-    expect(entries.has("logicGame.save")).toBe(true);
-    expect(elements.get("main-menu")!.hidden).toBe(false);
-    expect(elements.get("level-screen")!.hidden).toBe(true);
+    expect(elements.get("game-view")!.hidden).toBe(true);
   });
 });

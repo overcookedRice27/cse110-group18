@@ -1,5 +1,5 @@
-import { renderLevelGrid, resetLevels } from "./levels";
-import { hasProgress, hasLocalSave, clearLocalSave } from "../konva/save";
+import { renderLevelGrid, resetLevels, restoreProgress } from "./levels";
+import { hasProgress, hasLocalSave, loadSavedLevel } from "../konva/save";
 import dummy1 from "../levels/dummy1.json";
 import dummy2 from "../levels/dummy2.json";
 import dummy3 from "../levels/dummy3.json";
@@ -16,7 +16,6 @@ const continueBtn = document.getElementById(
     "continue-btn",
 ) as HTMLButtonElement;
 const newGameBtn = document.getElementById("new-game-btn") as HTMLButtonElement;
-const newGameDialog = document.getElementById("new-game-dialog") as HTMLDialogElement;
 const miniGameBtn = document.getElementById(
     "mini-game-btn",
 ) as HTMLButtonElement;
@@ -56,7 +55,7 @@ function showLevelScreen(): void {
     levelScreen.hidden = false;
 }
 
-// Reset session progress and open level selection after any required confirmation.
+// Reset session progress and open level selection when no save exists.
 function startNewGame(): void
 {
     resetLevels();
@@ -64,44 +63,41 @@ function startNewGame(): void
     showLevelScreen();
 }
 
-// Ask before clearing existing saved work; start directly when no save exists.
-newGameBtn.addEventListener("click", () =>
+// Resume an existing save automatically, or open level selection for a fresh game.
+newGameBtn.addEventListener("click", async () =>
 {
     try
     {
         if (hasLocalSave())
         {
-            newGameDialog.returnValue = "cancel";
-            newGameDialog.showModal();
+            const saved = loadSavedLevel();
+            if (!saved)
+            {
+                alert("Unable to load your local save. The save is invalid or incompatible.");
+                return;
+            }
+            const game = await import("../konva/main");
+            restoreProgress(saved.highestCompleted);
+            await game.showPlayerLevel(saved.level);
+            mainMenuScreen.hidden = true;
+            levelScreen.hidden = true;
+            gameScreen.hidden = false;
             return;
         }
         startNewGame();
     }
     catch
     {
-        alert("Unable to check your local save. Check your browser storage settings and try again.");
-    }
-});
-
-// Clear the save only for explicit overwrite confirmation; Cancel/Escape keep it.
-newGameDialog.addEventListener("close", () =>
-{
-    if (newGameDialog.returnValue !== "overwrite")
-    {
-        return;
-    }
-    try
-    {
-        clearLocalSave();
-        startNewGame();
-    }
-    catch
-    {
-        alert("Unable to clear your local save. Check your browser storage settings and try again.");
+        alert("Unable to load your local save. Check your browser storage settings and try again.");
     }
 });
 
 continueBtn.addEventListener("click", () => {
+    const saved = loadSavedLevel();
+    if (saved)
+    {
+        restoreProgress(saved.highestCompleted);
+    }
     showLevelScreen();
 });
 
@@ -132,7 +128,7 @@ levelGrid.addEventListener("click", async (event) =>
     try
     {
         const game = await import("../konva/main");
-        game.showPlayerLevel(dummyLevels[target.id]);
+        await game.showPlayerLevel(dummyLevels[target.id]);
         mainMenuScreen.hidden = true;
         levelScreen.hidden = true;
         gameScreen.hidden = false;

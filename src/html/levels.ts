@@ -13,6 +13,22 @@ const levels: Level[] = Array.from({ length: LEVEL_COUNT }, (_, index) => ({
     state: index === 0 ? "current" : "locked",
 }));
 
+// Read sequential completion progress for the shared level save format.
+export function getHighestCompleted(): number
+{
+    return levels.filter((level) => level.state === "finished").length;
+}
+
+// Restore saved completion through the existing state transition helper.
+export function restoreProgress(highestCompleted: number): void
+{
+    resetLevels();
+    for (let id = 1; id <= highestCompleted; id++)
+    {
+        completeLevel(id);
+    }
+}
+
 // Restore initial level availability when starting a new game.
 export function resetLevels(): void
 {

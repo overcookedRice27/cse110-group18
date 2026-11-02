@@ -8,7 +8,8 @@ import { createCreatorPanel } from "./levels/creatorPanel";
 import { loadLevel } from "./levels/loadLevel";
 import type { LevelData } from "./levels/levelData";
 import { circuitGrid, clearGrid } from "./utils/circuitGrid";
-import { completeLevel } from "../html/levels";
+import { completeLevel, getHighestCompleted } from "../html/levels";
+import { loadSavedLevel, saveLevel } from "./save";
 
 const stage = new Konva.Stage({
     container: "game-screen",
@@ -24,6 +25,26 @@ grid.y(50);
 stage.add(grid);
 
 let activeLevelId: number | null = null;
+const saveButton = document.getElementById("level-save-btn") as HTMLButtonElement;
+const saveStatus = document.getElementById("level-save-status") as HTMLElement;
+
+// Save the active player's board; creator layouts continue to use Export Level.
+saveButton.addEventListener("click", () =>
+{
+    if (activeLevelId === null || LEVEL_CREATOR_MODE)
+    {
+        return;
+    }
+    try
+    {
+        saveLevel(getLevelData(activeLevelId), getHighestCompleted());
+        saveStatus.textContent = "Level saved.";
+    }
+    catch
+    {
+        saveStatus.textContent = "Unable to save. Check browser storage and try again.";
+    }
+});
 
 // Complete only an active selected level, never a creator preview.
 stage.on("levelExitPowered", () =>
@@ -38,16 +59,25 @@ let openPlayer: (level: LevelData) => void;
 let openCreator: () => void;
 
 // Load a selected layout into the shared stage in player mode.
-export function showPlayerLevel(level: LevelData): void
+export async function showPlayerLevel(level: LevelData): Promise<void>
 {
     activeLevelId = null;
     openPlayer(level);
+    const saved = loadSavedLevel();
+    if (saved?.level.id === level.id)
+    {
+        await importLevel(grid, new File([JSON.stringify(saved.level)], "saved-level.json"));
+    }
+    saveButton.hidden = false;
+    saveStatus.textContent = "";
 }
 
 // Return the shared stage to its existing creator view and board.
 export function showLevelCreator(): void
 {
     activeLevelId = null;
+    saveButton.hidden = true;
+    saveStatus.textContent = "";
     openCreator();
 }
 
