@@ -1,4 +1,5 @@
 import { renderLevelGrid } from "./levels";
+import { hasProgress } from "../konva/save";
 
 const continueBtn = document.getElementById(
     "continue-btn",
@@ -19,9 +20,15 @@ const levelScreen = document.getElementById("level-screen") as HTMLElement;
 const levelGrid = document.getElementById("level-grid") as HTMLElement;
 const gameScreen = document.getElementById("game-screen") as HTMLDivElement;
 
+function refreshMenu(): void { //new
+    continueBtn.hidden = !hasProgress(); //if theres progress button hidden, no progress button present
+}
+
 function showMainMenu(): void {
     levelScreen.hidden = true;
     mainMenuScreen.hidden = false;
+    refreshMenu(); // new
+    //reloads screen to re-check save whenever menu shown
 }
 
 function showLevelScreen(): void {
@@ -49,3 +56,5 @@ miniGameBtn.addEventListener("click", () => {
 settingsBtn.addEventListener("click", () => {
     alert("Opening settings panel...");
 });
+
+refreshMenu(); //for first page load
