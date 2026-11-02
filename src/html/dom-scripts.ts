@@ -1,5 +1,6 @@
 import { renderLevelGrid } from "./levels";
 import { hasProgress } from "../konva/save";
+import { initScenarioGame } from "./scenario-mini-game/scenario-game";
 
 const continueBtn = document.getElementById(
     "continue-btn",
@@ -19,6 +20,13 @@ const mainMenuScreen = document.getElementById("main-menu") as HTMLElement;
 const levelScreen = document.getElementById("level-screen") as HTMLElement;
 const levelGrid = document.getElementById("level-grid") as HTMLElement;
 const gameScreen = document.getElementById("game-screen") as HTMLDivElement;
+const scenarioGame = initScenarioGame(() => showMainMenu());
+
+// Dev shortcut: open http://localhost:5173/?scenario to jump straight to the mini-game
+if (new URLSearchParams(location.search).has("scenario")) {
+    mainMenuScreen.hidden = true;
+    scenarioGame.open();
+}
 
 function refreshMenu(): void { //new
     continueBtn.hidden = !hasProgress(); //if theres progress button hidden, no progress button present
@@ -26,8 +34,10 @@ function refreshMenu(): void { //new
 
 function showMainMenu(): void {
     levelScreen.hidden = true;
-    mainMenuScreen.hidden = false;
-    refreshMenu(); // new
+    miniGameBtn.addEventListener("click", () => {
+    mainMenuScreen.hidden = true;
+    scenarioGame.open();
+});    refreshMenu(); // new
     //reloads screen to re-check save whenever menu shown
 }
 
