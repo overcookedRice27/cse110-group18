@@ -8,6 +8,7 @@ import { createCreatorPanel } from "./levels/creatorPanel";
 import { loadLevel } from "./levels/loadLevel";
 import type { LevelData } from "./levels/levelData";
 import { circuitGrid, clearGrid } from "./utils/circuitGrid";
+import { completeLevel } from "../html/levels";
 
 const stage = new Konva.Stage({
     container: "game-screen",
@@ -22,18 +23,31 @@ grid.y(50);
 
 stage.add(grid);
 
+let activeLevelId: number | null = null;
+
+// Complete only an active selected level, never a creator preview.
+stage.on("levelExitPowered", () =>
+{
+    if (!LEVEL_CREATOR_MODE && activeLevelId !== null)
+    {
+        completeLevel(activeLevelId);
+    }
+});
+
 let openPlayer: (level: LevelData) => void;
 let openCreator: () => void;
 
 // Load a selected layout into the shared stage in player mode.
 export function showPlayerLevel(level: LevelData): void
 {
+    activeLevelId = null;
     openPlayer(level);
 }
 
 // Return the shared stage to its existing creator view and board.
 export function showLevelCreator(): void
 {
+    activeLevelId = null;
     openCreator();
 }
 
@@ -147,6 +161,8 @@ if (LEVEL_CREATOR_MODE) {
             viewButton.click();
         }
         clearGrid();
+        // Set the level before loading because its EXIT may already be powered.
+        activeLevelId = level.id;
         loadLevel(grid, level);
         viewButton.hidden = true;
     };

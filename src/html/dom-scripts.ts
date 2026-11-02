@@ -1,4 +1,4 @@
-import { renderLevelGrid, resetLevels, isLevelUnlocked } from "./levels";
+import { renderLevelGrid, resetLevels } from "./levels";
 import { hasProgress, hasLocalSave, clearLocalSave } from "../konva/save";
 import dummy1 from "../levels/dummy1.json";
 import dummy2 from "../levels/dummy2.json";
@@ -131,11 +131,6 @@ levelGrid.addEventListener("click", async (event) =>
     }
     try
     {
-        // Enforce prerequisites even if a disabled button is manually re-enabled.
-        if (!isLevelUnlocked(dummyLevels[target.id].id))
-        {
-            return;
-        }
         const game = await import("../konva/main");
         game.showPlayerLevel(dummyLevels[target.id]);
         mainMenuScreen.hidden = true;

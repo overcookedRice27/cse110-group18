@@ -5,32 +5,13 @@ type LevelState = "finished" | "current" | "locked";
 type Level = {
     id: number;
     state: LevelState;
+    
 };
 
 const levels: Level[] = Array.from({ length: LEVEL_COUNT }, (_, index) => ({
     id: index + 1,
     state: index === 0 ? "current" : "locked",
 }));
-
-// Require the immediately previous level to be finished; Level 1 has no prerequisite.
-export function isLevelUnlocked(id: number): boolean
-{
-    const level = levels.find((entry) => entry.id === id);
-    if (!level)
-    {
-        return false;
-    }
-    const unlocked = id === 1 || levels.find((entry) => entry.id === id - 1)?.state === "finished";
-    if (!unlocked)
-    {
-        level.state = "locked";
-    }
-    else if (level.state !== "finished")
-    {
-        level.state = "current";
-    }
-    return unlocked;
-}
 
 // Restore initial level availability when starting a new game.
 export function resetLevels(): void
@@ -42,7 +23,6 @@ export function resetLevels(): void
 }
 
 function createLevelButton(level: Level): HTMLDivElement {
-    const unlocked = isLevelUnlocked(level.id);
     const col = document.createElement("div");
     col.className = "col";
 
@@ -51,7 +31,7 @@ function createLevelButton(level: Level): HTMLDivElement {
     button.id = `level-${level.id}-btn`;
     button.textContent = `Level ${level.id}`;
     button.className = `level-select level-select--${level.state}`;
-    button.disabled = !unlocked;
+    button.disabled = level.state === "locked";
 
     col.append(button);
     return col;
@@ -63,16 +43,20 @@ export function renderLevelGrid(container: HTMLElement): void {
     );
 }
 
-// Reject out-of-order completion and apply the same prerequisite check to the next level.
+// Mark an available level finished and unlock the next level.
 export function completeLevel(id: number): void
 {
     const level = levels.find((entry) => entry.id === id);
-    if (!level || !isLevelUnlocked(id))
+    if (!level || level.state === "locked")
     {
         return;
     }
 
     level.state = "finished";
 
-    isLevelUnlocked(id + 1);
+    const next = levels.find((entry) => entry.id === id + 1);
+    if (next?.state === "locked")
+    {
+        next.state = "current";
+    }
 }
