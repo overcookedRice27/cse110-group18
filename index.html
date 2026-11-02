@@ -28,6 +28,9 @@
         </div>
     </main>
 
+    <!-- New Game confirmation: overwriting clears the local save, then startNewGame()
+         calls resetLevels() to make Level 1 current and lock the remaining levels
+         before opening level selection. Cancel and Escape preserve existing progress. -->
     <dialog id="new-game-dialog" class="border-0 rounded p-4" aria-labelledby="new-game-title" aria-describedby="new-game-description">
         <h2 id="new-game-title" class="h4">Start a new game?</h2>
         <p id="new-game-description">A local save was found. Starting a new game will erase your saved progress. Continue?</p>

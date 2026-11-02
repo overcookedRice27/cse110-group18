@@ -22,6 +22,21 @@ grid.y(50);
 
 stage.add(grid);
 
+let openPlayer: (level: LevelData) => void;
+let openCreator: () => void;
+
+// Load a selected layout into the shared stage in player mode.
+export function showPlayerLevel(level: LevelData): void
+{
+    openPlayer(level);
+}
+
+// Return the shared stage to its existing creator view and board.
+export function showLevelCreator(): void
+{
+    openCreator();
+}
+
 if (LEVEL_CREATOR_MODE) {
     const creatorPanel = createCreatorPanel(grid, true);
     const playerPanel = createCreatorPanel(grid, false);
@@ -123,4 +138,26 @@ if (LEVEL_CREATOR_MODE) {
             viewButton.textContent = "Creator View";
         }
     });
+
+    // Preserve the creator board through the existing view toggle before playing.
+    openPlayer = (level) =>
+    {
+        if (LEVEL_CREATOR_MODE)
+        {
+            viewButton.click();
+        }
+        clearGrid();
+        loadLevel(grid, level);
+        viewButton.hidden = true;
+    };
+
+    // Restore creator controls when entering from the main menu.
+    openCreator = () =>
+    {
+        if (!LEVEL_CREATOR_MODE)
+        {
+            viewButton.click();
+        }
+        viewButton.hidden = false;
+    };
 }

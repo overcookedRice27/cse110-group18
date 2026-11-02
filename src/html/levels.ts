@@ -12,6 +12,26 @@ const levels: Level[] = Array.from({ length: LEVEL_COUNT }, (_, index) => ({
     state: index === 0 ? "current" : "locked",
 }));
 
+// Require the immediately previous level to be finished; Level 1 has no prerequisite.
+export function isLevelUnlocked(id: number): boolean
+{
+    const level = levels.find((entry) => entry.id === id);
+    if (!level)
+    {
+        return false;
+    }
+    const unlocked = id === 1 || levels.find((entry) => entry.id === id - 1)?.state === "finished";
+    if (!unlocked)
+    {
+        level.state = "locked";
+    }
+    else if (level.state !== "finished")
+    {
+        level.state = "current";
+    }
+    return unlocked;
+}
+
 // Restore initial level availability when starting a new game.
 export function resetLevels(): void
 {
@@ -22,6 +42,7 @@ export function resetLevels(): void
 }
 
 function createLevelButton(level: Level): HTMLDivElement {
+    const unlocked = isLevelUnlocked(level.id);
     const col = document.createElement("div");
     col.className = "col";
 
@@ -30,7 +51,7 @@ function createLevelButton(level: Level): HTMLDivElement {
     button.id = `level-${level.id}-btn`;
     button.textContent = `Level ${level.id}`;
     button.className = `level-select level-select--${level.state}`;
-    button.disabled = level.state === "locked";
+    button.disabled = !unlocked;
 
     col.append(button);
     return col;
@@ -42,16 +63,16 @@ export function renderLevelGrid(container: HTMLElement): void {
     );
 }
 
-export function completeLevel(id: number): void {
+// Reject out-of-order completion and apply the same prerequisite check to the next level.
+export function completeLevel(id: number): void
+{
     const level = levels.find((entry) => entry.id === id);
-    if (!level || level.state === "locked") {
+    if (!level || !isLevelUnlocked(id))
+    {
         return;
     }
 
     level.state = "finished";
 
-    const next = levels.find((entry) => entry.id === id + 1);
-    if (next?.state === "locked") {
-        next.state = "current";
-    }
+    isLevelUnlocked(id + 1);
 }
