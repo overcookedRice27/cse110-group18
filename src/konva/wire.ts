@@ -533,6 +533,11 @@ export function updateWireElectricity(): void {
             } else {
                 label.text("EXIT\nOFF");
             }
+            // Notify the owning stage when an EXIT lights up.
+            if (powered)
+            {
+                exit.getStage()?.fire("levelExitPowered");
+            }
         }
     }
 

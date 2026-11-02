@@ -5,12 +5,38 @@ type LevelState = "finished" | "current" | "locked";
 type Level = {
     id: number;
     state: LevelState;
+    
 };
 
 const levels: Level[] = Array.from({ length: LEVEL_COUNT }, (_, index) => ({
     id: index + 1,
     state: index === 0 ? "current" : "locked",
 }));
+
+// Read sequential completion progress for the shared level save format.
+export function getHighestCompleted(): number
+{
+    return levels.filter((level) => level.state === "finished").length;
+}
+
+// Restore saved completion through the existing state transition helper.
+export function restoreProgress(highestCompleted: number): void
+{
+    resetLevels();
+    for (let id = 1; id <= highestCompleted; id++)
+    {
+        completeLevel(id);
+    }
+}
+
+// Restore initial level availability when starting a new game.
+export function resetLevels(): void
+{
+    for (const level of levels)
+    {
+        level.state = level.id === 1 ? "current" : "locked";
+    }
+}
 
 function createLevelButton(level: Level): HTMLDivElement {
     const col = document.createElement("div");
@@ -33,16 +59,20 @@ export function renderLevelGrid(container: HTMLElement): void {
     );
 }
 
-export function completeLevel(id: number): void {
+// Mark an available level finished and unlock the next level.
+export function completeLevel(id: number): void
+{
     const level = levels.find((entry) => entry.id === id);
-    if (!level || level.state === "locked") {
+    if (!level || level.state === "locked")
+    {
         return;
     }
 
     level.state = "finished";
 
     const next = levels.find((entry) => entry.id === id + 1);
-    if (next?.state === "locked") {
+    if (next?.state === "locked")
+    {
         next.state = "current";
     }
 }

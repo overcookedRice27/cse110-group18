@@ -1,5 +1,16 @@
-import { renderLevelGrid } from "./levels";
-import { hasProgress } from "../konva/save";
+import { renderLevelGrid, resetLevels, restoreProgress } from "./levels";
+import { hasProgress, hasLocalSave, loadSavedLevel } from "../konva/save";
+import dummy1 from "../levels/dummy1.json";
+import dummy2 from "../levels/dummy2.json";
+import dummy3 from "../levels/dummy3.json";
+import type { LevelData } from "../konva/levels/levelData";
+
+//DUMMYTEST, change later for actual implementation
+const dummyLevels: Record<string, LevelData> = {
+    "level-1-btn": { ...dummy1, id: 1 } as LevelData,
+    "level-2-btn": { ...dummy2, id: 2 } as LevelData,
+    "level-3-btn": { ...dummy3, id: 3 } as LevelData,
+};
 
 const continueBtn = document.getElementById(
     "continue-btn",
@@ -40,14 +51,53 @@ function showMainMenu(): void {
 function showLevelScreen(): void {
     renderLevelGrid(levelGrid);
     mainMenuScreen.hidden = true;
+    gameScreen.hidden = true;
     levelScreen.hidden = false;
 }
 
-newGameBtn.addEventListener("click", () => {
-    alert("Starting a new game...");
+// Reset session progress and open level selection when no save exists.
+function startNewGame(): void
+{
+    resetLevels();
+    refreshMenu();
+    showLevelScreen();
+}
+
+// Resume an existing save automatically, or open level selection for a fresh game.
+newGameBtn.addEventListener("click", async () =>
+{
+    try
+    {
+        if (hasLocalSave())
+        {
+            const saved = loadSavedLevel();
+            if (!saved)
+            {
+                alert("Unable to load your local save. The save is invalid or incompatible.");
+                return;
+            }
+            const game = await import("../konva/main");
+            restoreProgress(saved.highestCompleted);
+            await game.showPlayerLevel(saved.level);
+            mainMenuScreen.hidden = true;
+            levelScreen.hidden = true;
+            gameScreen.hidden = false;
+            return;
+        }
+        startNewGame();
+    }
+    catch
+    {
+        alert("Unable to load your local save. Check your browser storage settings and try again.");
+    }
 });
 
 continueBtn.addEventListener("click", () => {
+    const saved = loadSavedLevel();
+    if (saved)
+    {
+        restoreProgress(saved.highestCompleted);
+    }
     showLevelScreen();
 });
 
@@ -67,11 +117,34 @@ settingsBtn.addEventListener("click", () => {
     alert("Opening settings panel...");
 });
 
+// Open levels 1–3 using their corresponding dummy layouts in /levels.
+levelGrid.addEventListener("click", async (event) =>
+{
+    const target = event.target;
+    if (!(target instanceof HTMLButtonElement) || !dummyLevels[target.id] || target.disabled)
+    {
+        return;
+    }
+    try
+    {
+        const game = await import("../konva/main");
+        await game.showPlayerLevel(dummyLevels[target.id]);
+        mainMenuScreen.hidden = true;
+        levelScreen.hidden = true;
+        gameScreen.hidden = false;
+    }
+    catch
+    {
+        alert(`Unable to load Level ${dummyLevels[target.id].id}. Please try again.`);
+    }
+});
+
 levelCreatorBtn.addEventListener("click", async () => {
     mainMenuScreen.hidden = true;
     levelScreen.hidden = true;
     gameScreen.hidden = false;
-    await import("../konva/main");
+    const game = await import("../konva/main");
+    game.showLevelCreator();
 });
 
 refreshMenu(); //for first page load
