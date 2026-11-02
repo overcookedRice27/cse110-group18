@@ -89,6 +89,25 @@ describe("new game", () =>
     expect(elements.get("level-grid")!.children).toHaveLength(10);
   });
 
+  it("restores progress and opens the saved current level when Continue is clicked", async () =>
+  {
+    const showPlayerLevel = vi.fn().mockResolvedValue(undefined);
+    vi.doMock("../src/konva/main", () => ({ showPlayerLevel }));
+    const level = { id: 2, pieces: [] };
+    entries.set("logicGame.save", JSON.stringify({ version: 1, highestCompleted: 1, level }));
+
+    elements.get("continue-btn")!.dispatchEvent(new Event("click"));
+
+    await vi.waitFor(() =>
+    {
+      expect(elements.get("game-view")!.hidden).toBe(false);
+    });
+    expect(showPlayerLevel).toHaveBeenCalledWith(level);
+    expect(elements.get("main-menu")!.hidden).toBe(true);
+    expect(elements.get("level-screen")!.hidden).toBe(true);
+    expect(alertNotice).not.toHaveBeenCalled();
+  });
+
   it("automatically restores saved progress and opens the saved level", async () =>
   {
     const showPlayerLevel = vi.fn().mockResolvedValue(undefined);

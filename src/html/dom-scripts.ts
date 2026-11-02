@@ -97,13 +97,23 @@ newGameBtn.addEventListener("click", async () =>
     }
 });
 
-continueBtn.addEventListener("click", () => {
+continueBtn.addEventListener("click", async () => {
     const saved = loadSavedLevel();
-    if (saved)
+    if (!saved) return;
+
+    try
     {
         restoreProgress(saved.highestCompleted);
+        const game = await import("../konva/main");
+        await game.showPlayerLevel(saved.level);
+        mainMenuScreen.hidden = true;
+        levelScreen.hidden = true;
+        gameScreen.hidden = false;
     }
-    showLevelScreen();
+    catch
+    {
+        alert("Unable to load your saved level. Please try again.");
+    }
 });
 
 levelsBtn.addEventListener("click", () => {
