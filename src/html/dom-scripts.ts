@@ -55,15 +55,19 @@ function showLevelScreen(): void {
     levelScreen.hidden = false;
 }
 
-// Reset session progress and open level selection when no save exists.
-function startNewGame(): void
+// Reset session progress and open the first level when no save exists.
+async function startNewGame(): Promise<void>
 {
     resetLevels();
     refreshMenu();
-    showLevelScreen();
+    const game = await import("../konva/main");
+    await game.showPlayerLevel(dummyLevels["level-1-btn"]);
+    mainMenuScreen.hidden = true;
+    levelScreen.hidden = true;
+    gameScreen.hidden = false;
 }
 
-// Resume an existing save automatically, or open level selection for a fresh game.
+// Resume an existing save automatically, or start Level 1 for a fresh game.
 newGameBtn.addEventListener("click", async () =>
 {
     try
@@ -84,7 +88,7 @@ newGameBtn.addEventListener("click", async () =>
             gameScreen.hidden = false;
             return;
         }
-        startNewGame();
+        await startNewGame();
     }
     catch
     {

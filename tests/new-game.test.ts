@@ -64,13 +64,19 @@ describe("new game", () =>
     vi.unstubAllGlobals();
   });
 
-  it("checks local saves on click and opens level selection when none exists", () =>
+  it("checks local saves on click and opens Level 1 when none exists", async () =>
   {
+    const showPlayerLevel = vi.fn().mockResolvedValue(undefined);
+    vi.doMock("../src/konva/main", () => ({ showPlayerLevel }));
     elements.get("new-game-btn")!.dispatchEvent(new Event("click"));
+    await vi.waitFor(() =>
+    {
+      expect(elements.get("game-view")!.hidden).toBe(false);
+    });
     expect(getItem).toHaveBeenCalledWith("logicGame.save");
+    expect(showPlayerLevel).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
     expect(elements.get("main-menu")!.hidden).toBe(true);
-    expect(elements.get("level-screen")!.hidden).toBe(false);
-    expect(elements.get("level-grid")!.children).toHaveLength(10);
+    expect(elements.get("level-screen")!.hidden).toBe(true);
     expect(alertNotice).not.toHaveBeenCalled();
   });
 
