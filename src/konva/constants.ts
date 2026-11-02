@@ -1,6 +1,16 @@
 const STAGE_WIDTH = 1000;
 const STAGE_HEIGHT = 600;
 
+export const LEVEL_CREATOR_MODE = true;
+
+export const CREATOR_PANEL = {
+    X: 0,
+    Y: 40,
+    WIDTH: 168,
+    HEIGHT: 355,
+    PADDING: 10,
+};
+
 export const STAGE = {
     WIDTH: STAGE_WIDTH,
     HEIGHT: STAGE_HEIGHT,

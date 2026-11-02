@@ -1,9 +1,11 @@
 import Konva from "konva";
-import { STAGE, COLORS, GRID } from "./constants";
-import { createGate } from "./gate";
+import { LEVEL_CREATOR_MODE, STAGE } from "./constants";
 import { createButton } from "./button";
 import { drawGridLayer as createGridLayer } from "./grid";
-import { createWire, setWirePower } from "./wire";
+import { exportLevel } from "./levels/exportLevel";
+import { importLevel } from "./levels/importLevel";
+import { createCreatorPanel } from "./levels/creatorPanel";
+import { clearGrid } from "./utils/circuitGrid";
 
 const stage = new Konva.Stage({
     container: "game-screen",
@@ -11,54 +13,56 @@ const stage = new Konva.Stage({
     height: STAGE.HEIGHT,
 });
 
-const layer = new Konva.Layer();
-
-const background = new Konva.Rect({
-    width: STAGE.WIDTH,
-    height: STAGE.HEIGHT,
-    fill: COLORS.UI.BACKGROUND,
-    listening: false,
-});
-
-const gate = createGate("AND");
-
-gate.x(10);
-gate.y(200);
-
-const wireButton = createButton("Add Wire");
-
-wireButton.x(200);
-wireButton.y(500);
-
-const electricityButton = createButton("Toggle Electrcity");
-
-electricityButton.x(500);
-electricityButton.y(500);
-
-layer.add(wireButton, electricityButton);
-
-layer.add(gate);
-
 const grid = createGridLayer();
 
 grid.x(180);
 grid.y(50);
 
-wireButton.on("click", () => {
-    const wire = createWire();
-    grid.add(wire);
-});
-
-const powerWire = createWire();
-grid.add(powerWire);
-
-let electricty = true;
-
-electricityButton.on("click", () => {
-    setWirePower(powerWire, electricty);
-    electricty = !electricty;
-});
-
 stage.add(grid);
 
-stage.add(layer);
+if (LEVEL_CREATOR_MODE) {
+    stage.add(createCreatorPanel(grid));
+    const controls = new Konva.Layer();
+    const exportButton = createButton("Export Level");
+    const importButton = createButton("Import Level");
+    const clearButton = createButton("Clear Board");
+    const levelFile = document.createElement("input");
+    let levelId = 1;
+
+    importButton.position({ x: 150, y: 500 });
+    exportButton.position({ x: 400, y: 500 });
+    clearButton.position({ x: 650, y: 500 });
+    levelFile.type = "file";
+    levelFile.accept = ".json,application/json";
+
+    exportButton.on("click", () => {
+        const answer = prompt("Enter the level ID:", String(levelId));
+        if (answer === null) return;
+        const id = Number(answer);
+        if (!Number.isSafeInteger(id) || id < 1) {
+            alert("Enter a positive whole number for the level ID.");
+            return;
+        }
+        levelId = id;
+        exportLevel(id);
+    });
+
+    importButton.on("click", () => levelFile.click());
+    clearButton.on("click", () => clearGrid());
+    levelFile.addEventListener("change", async () => {
+        const file = levelFile.files?.[0];
+        if (!file) return;
+
+        try {
+            const level = await importLevel(grid, file);
+            levelId = level.id;
+        } catch {
+            alert("Could not import the level. Check that the JSON contains a valid level layout.");
+        } finally {
+            levelFile.value = "";
+        }
+    });
+
+    controls.add(importButton, exportButton, clearButton);
+    stage.add(controls);
+}

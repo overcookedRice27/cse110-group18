@@ -13,6 +13,24 @@ for (let y = 0; y < GRID.Y_COUNT; y++) {
     circuitGrid.push(row);
 }
 
+export function removeElement(element: Konva.Group): void {
+    for (const row of circuitGrid) {
+        for (let x = 0; x < row.length; x++) {
+            if (row[x] === element) row[x] = null;
+        }
+    }
+}
+
+export function clearGrid(): void {
+    for (const row of circuitGrid) {
+        for (const element of row) {
+            if (!element) continue;
+            removeElement(element);
+            element.destroy();
+        }
+    }
+}
+
 export function placeElement(
     element: Konva.Group,
     x: number,
@@ -44,13 +62,7 @@ export function placeElement(
     }
 
     // Clear the element's previous grid position.
-    for (let gridY = 0; gridY < GRID.Y_COUNT; gridY++) {
-        for (let gridX = 0; gridX < GRID.X_COUNT; gridX++) {
-            if (circuitGrid[gridY][gridX] === element) {
-                circuitGrid[gridY][gridX] = null;
-            }
-        }
-    }
+    removeElement(element);
 
     // Register the element in every cell it occupies.
     for (let offsetY = 0; offsetY < height; offsetY++) {

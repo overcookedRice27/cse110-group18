@@ -1,7 +1,7 @@
 import Konva from "konva";
 import { COLORS, GRID } from "./constants";
-import { getRelativeGridCoordinate } from "./utils/grid";
-import { circuitGrid, placeElement } from "./utils/circuitGrid";
+import { getRelativeGridCoordinate, isPointerOverCreatorPanel } from "./utils/grid";
+import { circuitGrid, placeElement, removeElement } from "./utils/circuitGrid";
 
 export type WireShape = "straight" | "corner" | "tee" | "cross";
 
@@ -35,7 +35,7 @@ export function createWire(shape: WireShape = "cross"): Konva.Group {
         if (x === undefined || y === undefined) return;
 
         // Remove the wire from its original grid position.
-        removeWireFromGrid(wireGroup);
+        removeElement(wireGroup);
 
         // Reset the moving wire to its isolated appearance.
         redrawWire(wireGroup, []);
@@ -48,6 +48,11 @@ export function createWire(shape: WireShape = "cross"): Konva.Group {
     });
 
     wireGroup.on("dragend", () => {
+        if (isPointerOverCreatorPanel(wireGroup)) {
+            wireGroup.destroy();
+            return;
+        }
+
         const gridCoord = getWireGridCoordinate(wireGroup);
         const oldX = wireGroup.getAttr("gridX");
         const oldY = wireGroup.getAttr("gridY");
@@ -76,16 +81,6 @@ export function createWire(shape: WireShape = "cross"): Konva.Group {
     });
 
     return wireGroup;
-}
-
-function removeWireFromGrid(wire: Konva.Group): void {
-    for (let y = 0; y < circuitGrid.length; y++) {
-        for (let x = 0; x < circuitGrid[y].length; x++) {
-            if (circuitGrid[y][x] === wire) {
-                circuitGrid[y][x] = null;
-            }
-        }
-    }
 }
 
 function getWireGridCoordinate(wireGroup: Konva.Group): GridCoordinate | null {
@@ -136,7 +131,7 @@ type WirePreview = {
     y: number;
 };
 
-function updateWireAndNeighbors(
+export function updateWireAndNeighbors(
     x: number,
     y: number,
     preview?: WirePreview,

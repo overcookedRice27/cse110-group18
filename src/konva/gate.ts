@@ -1,23 +1,25 @@
 import Konva from "konva";
 import { COLORS, GRID } from "./constants";
-import { getRelativeGridCoordinate } from "./utils/grid";
+import { getRelativeGridCoordinate, isPointerOverCreatorPanel } from "./utils/grid";
 import { clamp } from "./utils/math";
-import { placeElement } from "./utils/circuitGrid";
+import { placeElement, removeElement } from "./utils/circuitGrid";
 import { refreshGateConnections, updateWireElectricity } from "./wire";
+import type { GateType } from "./levels/levelData";
 
-const gateCells = { width: 2, height: 3 };
+export const gateCells = { width: 2, height: 3 };
 
 const gateDimensions = {
     width: GRID.CELL_SIZE * gateCells.width,
     height: GRID.CELL_SIZE * gateCells.height,
 };
 
-export function createGate(name: string): Konva.Group {
+export function createGate(name: GateType): Konva.Group {
     const gateGroup = new Konva.Group({
         draggable: true,
     });
 
     gateGroup.setAttr("elementType", "gate");
+    gateGroup.setAttr("gateType", name);
 
     const background = new Konva.Rect({
         size: gateDimensions,
@@ -74,6 +76,17 @@ export function createGate(name: string): Konva.Group {
     });
 
     gateGroup.on("dragend", () => {
+        if (isPointerOverCreatorPanel(gateGroup)) {
+            const oldX = gateGroup.getAttr("gridX") as number | undefined;
+            const oldY = gateGroup.getAttr("gridY") as number | undefined;
+            removeElement(gateGroup);
+            gateGroup.destroy();
+            if (oldX !== undefined && oldY !== undefined) {
+                refreshGateConnections(oldX, oldY);
+            }
+            return;
+        }
+
         const grid = gateGroup.getStage()?.findOne(".grid") as Konva.Layer;
 
         if (!grid || !grabbedCoordinate) return;
@@ -85,8 +98,6 @@ export function createGate(name: string): Konva.Group {
         );
 
         if (!gridCoord) return;
-
-        const gridOffset = grid.getAbsolutePosition();
 
         const newGateCoordinate = {
             x: clamp(
@@ -116,11 +127,6 @@ export function createGate(name: string): Konva.Group {
             gateGroup.position(dragStartPosition);
             return;
         }
-
-        gateGroup.position({
-            x: newGateCoordinate.x * GRID.CELL_SIZE + gridOffset.x,
-            y: newGateCoordinate.y * GRID.CELL_SIZE + gridOffset.y,
-        });
 
         if (oldX !== undefined && oldY !== undefined) {
             refreshGateConnections(oldX, oldY);

@@ -1,0 +1,12 @@
+{
+    "id": 1,
+    "pieces": [
+        { "type": "gate", "gateType": "AND", "x": 2, "y": 1 },
+        { "type": "wire", "x": 1, "y": 1 },
+        { "type": "wire", "x": 1, "y": 2 },
+        { "type": "wire", "x": 1, "y": 3 },
+        { "type": "wire", "x": 4, "y": 2 },
+        { "type": "wire", "x": 5, "y": 2 },
+        { "type": "gate", "gateType": "OR", "x": 6, "y": 2 }
+    ]
+}
