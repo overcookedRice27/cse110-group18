@@ -10,6 +10,12 @@ import type { GateType } from "./levels/levelData";
 
 export type WireShape = "straight" | "corner" | "tee" | "cross";
 
+export type SignalResult = {
+    exitState: string;
+    passed: boolean;
+    message: string;
+};
+
 type GridCoordinate = { x: number; y: number };
 
 export function createWire(
@@ -203,6 +209,26 @@ export function createBlock(): Konva.Group {
     );
     return block;
 }
+
+
+export function checkCircuit(poweredCheck: boolean): SignalResult {
+    const failure: SignalResult = {
+        exitState: "locked",
+        passed: false,
+        message: "Incorrect Circuit! Level Failed!",
+    };
+
+    if (poweredCheck !== true) {
+        return failure;
+    }
+
+    return {
+        exitState: "open",
+        passed: true,
+        message: "Correct Circuit! Level Complete!",
+    };
+}
+
 
 function getWireGridCoordinate(wireGroup: Konva.Group): GridCoordinate | null {
     const grid = wireGroup.getStage()?.findOne(".grid") as
@@ -534,12 +560,14 @@ export function updateWireElectricity(): void {
                 label.text("EXIT\nOFF");
             }
             // Notify the owning stage when an EXIT lights up.
-            if (powered)
-            {
-                exit.getStage()?.fire("levelExitPowered");
-            }
+            
         }
     }
+
+
+
+
+
 
     // Each pass can carry a signal through one more gate. Gate outputs are
     // applied together so the result does not depend on the order of the grid.
