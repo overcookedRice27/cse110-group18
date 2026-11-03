@@ -1,5 +1,5 @@
 import Konva from "konva";
-import { LEVEL_CREATOR_MODE, setCreatorMode, STAGE } from "./constants";
+import { isCreatorView, setCreatorView, STAGE } from "./constants";
 import { createButton } from "./button";
 import { drawGridLayer as createGridLayer } from "./grid";
 import { exportLevel, getLevelData } from "./levels/exportLevel";
@@ -32,7 +32,7 @@ const saveStatus = document.getElementById("level-save-status") as HTMLElement;
 // Save the active player's board; creator layouts continue to use Export Level.
 saveButton.addEventListener("click", () =>
 {
-    if (activeLevelId === null || LEVEL_CREATOR_MODE)
+    if (activeLevelId === null || isCreatorView)
     {
         return;
     }
@@ -78,7 +78,7 @@ validateButton.addEventListener("click", () => {
 // Complete only an active selected level, never a creator preview.
 stage.on("levelExitPowered", () =>
 {
-    if (!LEVEL_CREATOR_MODE && activeLevelId !== null)
+    if (!isCreatorView && activeLevelId !== null)
     {
         completeLevel(activeLevelId);
     }
@@ -110,7 +110,7 @@ export function showLevelCreator(): void
     openCreator();
 }
 
-if (LEVEL_CREATOR_MODE) {
+if (isCreatorView) {
     const creatorPanel = createCreatorPanel(grid, true);
     const playerPanel = createCreatorPanel(grid, false);
     playerPanel.hide();
@@ -175,18 +175,18 @@ if (LEVEL_CREATOR_MODE) {
     ) as HTMLButtonElement;
     viewButton.hidden = false;
     viewButton.addEventListener("click", () => {
-        if (LEVEL_CREATOR_MODE) {
+        if (isCreatorView) {
             creatorLevel = getLevelData(levelId);
         }
-        setCreatorMode(!LEVEL_CREATOR_MODE);
-        if (LEVEL_CREATOR_MODE && creatorLevel) {
+        setCreatorView(!isCreatorView);
+        if (isCreatorView && creatorLevel) {
             clearGrid();
             loadLevel(grid, creatorLevel);
             creatorLevel = null;
         }
-        controls.visible(LEVEL_CREATOR_MODE);
-        creatorPanel.visible(LEVEL_CREATOR_MODE);
-        playerPanel.visible(!LEVEL_CREATOR_MODE);
+        controls.visible(isCreatorView);
+        creatorPanel.visible(isCreatorView);
+        playerPanel.visible(!isCreatorView);
 
         // Gates occupy several cells, so update each piece only once.
         const pieces = new Set<Konva.Group>();
@@ -199,13 +199,13 @@ if (LEVEL_CREATOR_MODE) {
             const type = piece.getAttr("elementType");
             const fixed = piece.getAttr("fixed") === true;
             const draggable =
-                LEVEL_CREATOR_MODE ||
+                isCreatorView ||
                 ((type === "wire" || type === "gate") && !fixed);
             piece.draggable(draggable);
-            piece.findOne(".fixedLabel")?.visible(LEVEL_CREATOR_MODE && fixed);
+            piece.findOne(".fixedLabel")?.visible(isCreatorView && fixed);
         }
 
-        if (LEVEL_CREATOR_MODE) {
+        if (isCreatorView) {
             viewButton.textContent = "Player View";
         } else {
             viewButton.textContent = "Creator View";
@@ -215,7 +215,7 @@ if (LEVEL_CREATOR_MODE) {
     // Preserve the creator board through the existing view toggle before playing.
     openPlayer = (level) =>
     {
-        if (LEVEL_CREATOR_MODE)
+        if (isCreatorView)
         {
             viewButton.click();
         }
@@ -229,7 +229,7 @@ if (LEVEL_CREATOR_MODE) {
     // Restore creator controls when entering from the main menu.
     openCreator = () =>
     {
-        if (!LEVEL_CREATOR_MODE)
+        if (!isCreatorView)
         {
             viewButton.click();
         }

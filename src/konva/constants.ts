@@ -1,10 +1,14 @@
 const STAGE_WIDTH = 1000;
 const STAGE_HEIGHT = 600;
 
-export let LEVEL_CREATOR_MODE = true;
+// Controls whether the developer-facing creator is available from the menu.
+export const LEVEL_CREATOR_ENABLED = true;
 
-export function setCreatorMode(enabled: boolean): void {
-    LEVEL_CREATOR_MODE = enabled;
+// Tracks the current board view; this changes when entering or leaving a level.
+export let isCreatorView = true;
+
+export function setCreatorView(enabled: boolean): void {
+    isCreatorView = enabled;
 }
 
 export const CREATOR_PANEL = {
