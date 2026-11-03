@@ -16,6 +16,7 @@ const continueBtn = document.getElementById(
     "continue-btn",
 ) as HTMLButtonElement;
 const newGameBtn = document.getElementById("new-game-btn") as HTMLButtonElement;
+const levelsBtn = document.getElementById("levels-btn") as HTMLButtonElement;
 const miniGameBtn = document.getElementById(
     "mini-game-btn",
 ) as HTMLButtonElement;
@@ -55,15 +56,19 @@ function showLevelScreen(): void {
     levelScreen.hidden = false;
 }
 
-// Reset session progress and open level selection when no save exists.
-function startNewGame(): void
+// Reset session progress and open the first level when no save exists.
+async function startNewGame(): Promise<void>
 {
     resetLevels();
     refreshMenu();
-    showLevelScreen();
+    const game = await import("../konva/main");
+    await game.showPlayerLevel(dummyLevels["level-1-btn"]);
+    mainMenuScreen.hidden = true;
+    levelScreen.hidden = true;
+    gameScreen.hidden = false;
 }
 
-// Resume an existing save automatically, or open level selection for a fresh game.
+// Resume an existing save automatically, or start Level 1 for a fresh game.
 newGameBtn.addEventListener("click", async () =>
 {
     try
@@ -84,7 +89,7 @@ newGameBtn.addEventListener("click", async () =>
             gameScreen.hidden = false;
             return;
         }
-        startNewGame();
+        await startNewGame();
     }
     catch
     {
@@ -92,12 +97,26 @@ newGameBtn.addEventListener("click", async () =>
     }
 });
 
-continueBtn.addEventListener("click", () => {
+continueBtn.addEventListener("click", async () => {
     const saved = loadSavedLevel();
-    if (saved)
+    if (!saved) return;
+
+    try
     {
         restoreProgress(saved.highestCompleted);
+        const game = await import("../konva/main");
+        await game.showPlayerLevel(saved.level);
+        mainMenuScreen.hidden = true;
+        levelScreen.hidden = true;
+        gameScreen.hidden = false;
     }
+    catch
+    {
+        alert("Unable to load your saved level. Please try again.");
+    }
+});
+
+levelsBtn.addEventListener("click", () => {
     showLevelScreen();
 });
 

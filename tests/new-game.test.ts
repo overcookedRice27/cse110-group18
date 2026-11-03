@@ -36,7 +36,7 @@ describe("new game", () =>
     elements.clear();
     entries.clear();
     for (const id of [
-      "continue-btn", "new-game-btn", "mini-game-btn",
+      "continue-btn", "new-game-btn", "levels-btn", "mini-game-btn",
       "settings-btn", "level-creator-btn", "back-to-menu-btn", "game-back-btn",
       "main-menu", "level-screen", "level-grid", "game-view",
     ])
@@ -64,13 +64,47 @@ describe("new game", () =>
     vi.unstubAllGlobals();
   });
 
-  it("checks local saves on click and opens level selection when none exists", () =>
+  it("checks local saves on click and opens Level 1 when none exists", async () =>
   {
+    const showPlayerLevel = vi.fn().mockResolvedValue(undefined);
+    vi.doMock("../src/konva/main", () => ({ showPlayerLevel }));
     elements.get("new-game-btn")!.dispatchEvent(new Event("click"));
+    await vi.waitFor(() =>
+    {
+      expect(elements.get("game-view")!.hidden).toBe(false);
+    });
     expect(getItem).toHaveBeenCalledWith("logicGame.save");
+    expect(showPlayerLevel).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
+    expect(elements.get("main-menu")!.hidden).toBe(true);
+    expect(elements.get("level-screen")!.hidden).toBe(true);
+    expect(alertNotice).not.toHaveBeenCalled();
+  });
+
+  it("opens the level selection screen when Levels is clicked", () =>
+  {
+    elements.get("levels-btn")!.dispatchEvent(new Event("click"));
     expect(elements.get("main-menu")!.hidden).toBe(true);
     expect(elements.get("level-screen")!.hidden).toBe(false);
+    expect(elements.get("game-view")!.hidden).toBe(true);
     expect(elements.get("level-grid")!.children).toHaveLength(10);
+  });
+
+  it("restores progress and opens the saved current level when Continue is clicked", async () =>
+  {
+    const showPlayerLevel = vi.fn().mockResolvedValue(undefined);
+    vi.doMock("../src/konva/main", () => ({ showPlayerLevel }));
+    const level = { id: 2, pieces: [] };
+    entries.set("logicGame.save", JSON.stringify({ version: 1, highestCompleted: 1, level }));
+
+    elements.get("continue-btn")!.dispatchEvent(new Event("click"));
+
+    await vi.waitFor(() =>
+    {
+      expect(elements.get("game-view")!.hidden).toBe(false);
+    });
+    expect(showPlayerLevel).toHaveBeenCalledWith(level);
+    expect(elements.get("main-menu")!.hidden).toBe(true);
+    expect(elements.get("level-screen")!.hidden).toBe(true);
     expect(alertNotice).not.toHaveBeenCalled();
   });
 
