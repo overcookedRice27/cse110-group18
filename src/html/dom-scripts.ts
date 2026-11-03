@@ -4,6 +4,7 @@ import dummy1 from "../levels/dummy1.json";
 import dummy2 from "../levels/dummy2.json";
 import dummy3 from "../levels/dummy3.json";
 import type { LevelData } from "../konva/levels/levelData";
+import { LEVEL_CREATOR_ENABLED } from "../konva/constants";
 
 //DUMMYTEST, change later for actual implementation
 const dummyLevels: Record<string, LevelData> = {
@@ -35,6 +36,8 @@ const mainMenuScreen = document.getElementById("main-menu") as HTMLElement;
 const levelScreen = document.getElementById("level-screen") as HTMLElement;
 const levelGrid = document.getElementById("level-grid") as HTMLElement;
 const gameScreen = document.getElementById("game-view") as HTMLElement;
+
+levelCreatorBtn.hidden = !LEVEL_CREATOR_ENABLED;
 
 function refreshMenu(): void {
     //new

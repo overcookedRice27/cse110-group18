@@ -1,5 +1,5 @@
 import Konva from "konva";
-import { COLORS, GRID, LEVEL_CREATOR_MODE } from "./constants";
+import { COLORS, GRID, isCreatorView } from "./constants";
 import {
     getRelativeGridCoordinate,
     isPointerOverCreatorPanel,
@@ -23,7 +23,7 @@ export function createWire(
     fixed = false,
 ): Konva.Group {
     const wireGroup = new Konva.Group({
-        draggable: LEVEL_CREATOR_MODE || !fixed,
+        draggable: isCreatorView || !fixed,
     });
 
     wireGroup.setAttrs({
@@ -57,7 +57,7 @@ export function createWire(
     wireGroup.on("click", () => {
         if (
             wireGroup.getAttr("elementType") === "wire" &&
-            LEVEL_CREATOR_MODE &&
+            isCreatorView &&
             wireGroup.getAttr("gridX") !== undefined
         ) {
             const fixed = !wireGroup.getAttr("fixed");
@@ -141,7 +141,7 @@ export function createWire(
 
 export function createInput(on = false): Konva.Group {
     const input = createWire();
-    input.draggable(LEVEL_CREATOR_MODE);
+    input.draggable(isCreatorView);
     input.destroyChildren();
     input.setAttrs({ elementType: "input", powerSource: on });
     input.add(
@@ -168,7 +168,7 @@ export function createInput(on = false): Konva.Group {
 
 export function createExit(): Konva.Group {
     const exit = createWire();
-    exit.draggable(LEVEL_CREATOR_MODE);
+    exit.draggable(isCreatorView);
     exit.destroyChildren();
     exit.setAttrs({ elementType: "exit", powered: false });
     exit.add(
@@ -195,7 +195,7 @@ export function createExit(): Konva.Group {
 
 export function createBlock(): Konva.Group {
     const block = createWire();
-    block.draggable(LEVEL_CREATOR_MODE);
+    block.draggable(isCreatorView);
     block.destroyChildren();
     block.setAttr("elementType", "block");
     block.add(
