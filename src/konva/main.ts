@@ -10,6 +10,7 @@ import type { LevelData } from "./levels/levelData";
 import { circuitGrid, clearGrid } from "./utils/circuitGrid";
 import { completeLevel, getHighestCompleted } from "../html/levels";
 import { loadSavedLevel, saveLevel } from "./save";
+import { checkCircuit } from "./wire";
 
 const stage = new Konva.Stage({
     container: "game-screen",
@@ -43,6 +44,34 @@ saveButton.addEventListener("click", () =>
     catch
     {
         saveStatus.textContent = "Unable to save. Check browser storage and try again.";
+    }
+});
+
+
+//Create a validate button and circuit status button with listener
+const validateButton = document.getElementById(
+    "validate-circuit-btn"
+) as HTMLButtonElement;
+
+const circuitStatus = document.getElementById(
+    "circuit-status"
+) as HTMLElement;
+
+validateButton.addEventListener("click", () => {
+    const exits = grid.find(
+        (node: Konva.Node) => node.getAttr("elementType") === "exit"
+    );
+
+    const powered = exits.length > 0 &&
+        exits.every((exit) => exit.getAttr("powered") === true);
+
+    const result = checkCircuit(powered);
+
+    circuitStatus.textContent = result.message;
+    circuitStatus.style.color = result.passed ? "green" : "red";
+
+    if (result.passed) {
+        stage.fire("levelExitPowered");
     }
 });
 

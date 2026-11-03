@@ -561,12 +561,6 @@ export function updateWireElectricity(): void {
             }
             // Notify the owning stage when an EXIT lights up.
             
-            const exitStatus = checkCircuit(powered);
-
-            if (exitStatus.exitState === "open")
-            {
-                exit.getStage()?.fire("levelExitPowered");
-            }
         }
     }
 
