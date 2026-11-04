@@ -51,6 +51,51 @@
         <div id="game-screen"></div>
     </main>
 
+    <main id="truth-table-screen" class="py-4" hidden>
+        <div class="container col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <button id="tt-back-btn" class="btn btn-outline-secondary" type="button">Back</button>
+                <h1 id="tt-title" class="h3 m-0"></h1>
+                <span id="tt-progress" class="text-body-secondary"></span>
+            </div>
+
+            <p>Drag the right output into each empty cell.</p>
+
+            <div class="row mb-3">
+                <div class="col-8">
+                    <table class="table table-bordered text-center">
+                        <thead>
+                            <tr><th>A \ B</th><th>0</th><th>1</th></tr>
+                        </thead>
+                        <tbody id="tt-table-body"></tbody>
+                    </table>
+                </div>
+
+                <div class="col-4">
+                    <p class="fw-semibold mb-2">Drag an output:</p>
+
+                    <div class="d-flex gap-3 mb-3">
+                        <div class="tt-token btn btn-outline-dark" draggable="true" data-token="0">0</div>
+                        <div class="tt-token btn btn-outline-dark" draggable="true" data-token="1">1</div>
+                    </div>
+
+                    <button class="btn btn-outline-secondary btn-sm" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#tt-rule-collapse"
+                            aria-expanded="false" aria-controls="tt-rule-collapse">
+                        Show rule
+                    </button>
+                    <div class="collapse mt-2" id="tt-rule-collapse">
+                        <div id="tt-rule" class="card card-body"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tt-feedback" class="alert alert-secondary mb-3" role="status"></div>
+
+            <button id="tt-next-btn" class="btn btn-primary px-5 py-2" type="button" disabled>Next round</button>
+        </div>
+    </main>
+    
     <script type="module" defer src="src/html/dom-scripts.ts"></script>
 
 </body>

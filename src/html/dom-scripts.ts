@@ -4,6 +4,7 @@ import dummy1 from "../levels/dummy1.json";
 import dummy2 from "../levels/dummy2.json";
 import dummy3 from "../levels/dummy3.json";
 import type { LevelData } from "../konva/levels/levelData";
+import { initTruthTableGame } from "./truth-table-mini-game/truth-table-game";
 
 //DUMMYTEST, change later for actual implementation
 const dummyLevels: Record<string, LevelData> = {
@@ -35,6 +36,20 @@ const mainMenuScreen = document.getElementById("main-menu") as HTMLElement;
 const levelScreen = document.getElementById("level-screen") as HTMLElement;
 const levelGrid = document.getElementById("level-grid") as HTMLElement;
 const gameScreen = document.getElementById("game-view") as HTMLElement;
+let truthTableGame: { open: () => void } | null = null;
+
+function openTruthTable(): void {
+    if (truthTableGame === null) {
+        truthTableGame = initTruthTableGame(() => showMainMenu());
+    }
+    truthTableGame.open();
+}
+
+// Dev shortcut: open http://localhost:5173/?truthtable to jump straight to the mini-game
+if (typeof location !== "undefined" && new URLSearchParams(location.search).has("truthtable")) {
+    mainMenuScreen.hidden = true;
+    openTruthTable();
+}
 
 function refreshMenu(): void {
     //new
