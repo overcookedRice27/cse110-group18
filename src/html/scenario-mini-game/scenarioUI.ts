@@ -1,0 +1,1 @@
+import { SCENARIOS, checkAnswer, type GateChoice } from "./scenarios"
