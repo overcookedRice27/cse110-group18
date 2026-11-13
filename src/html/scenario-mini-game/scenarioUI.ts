@@ -13,6 +13,7 @@ export function initScenarioGame(onExit: () => void): { open: () => void } { //s
     const feedback = document.getElementById("scenario-feedback") as HTMLElement;
     const submitButton = document.getElementById("scenario-submit-btn") as HTMLElement;
     const backButton = document.getElementById("scenario-back-btn") as HTMLElement;
+    const nextButton = document.getElementById("scenario-next-btn") as HTMLElement;
 
     // What the game remembers
     let questionNumber = 0; // 0 is the first question
@@ -33,38 +34,40 @@ export function initScenarioGame(onExit: () => void): { open: () => void } { //s
         //builds label at top
         blank.textContent = "?"; //resets blank to show ?
         chosenWord = null;
+        nextButton.hidden = true;
+        submitButton.hidden = false;
 
         // Make a draggable button for each choice
-        choiceArea.innerHTML = "";
+        choiceArea.innerHTML = ""; //empty button area
         for (const word of question.choices) {
-            const button = document.createElement("button");
+            const button = document.createElement("button"); //make new button
             button.className = "btn btn-outline-primary px-4 py-2";
-            button.textContent = word;
-            button.draggable = true;
-            button.addEventListener("dragstart", function (event) {
-                event.dataTransfer?.setData("text/plain", word);
+            button.textContent = word; //set label
+            button.draggable = true; //makes it draggable
+            button.addEventListener("dragstart", function (event) { //drag starts -> run function
+                event.dataTransfer?.setData("text/plain", word); //saves button's word to drag's storage under label
+                //dataTransfer -> storage area for current drag, drag begins = empty, after data set = holds text item
             });
-            choiceArea.appendChild(button);
+            choiceArea.appendChild(button); //puts button on choiceArea
         }
     }
 
-    // Hide this screen and go back to the menu
+    // closes minigame takes player back to main menu
     function leave(): void {
         screen.hidden = true;
         onExit();
     }
 
-    // The player drops a word onto the blank
+    // runs when player lets go of dragged word over blank
     function handleDrop(event: DragEvent): void {
-        event.preventDefault();
-        const word = event.dataTransfer?.getData("text/plain") as GateChoice;
-        if (SCENARIOS[questionNumber].choices.includes(word)) {
+        const word = event.dataTransfer?.getData("text/plain") as GateChoice; //reads word from drag envelope and treats as one of gate names
+        if (SCENARIOS[questionNumber].choices.includes(word)) { //checks if its one of the choices
             chosenWord = word;
-            blank.textContent = word;
+            blank.textContent = word; //shows word in blank
         }
     }
 
-    // The player presses Submit
+    // when player presses submit, answer checking logic
     function handleSubmit(): void {
         if (chosenWord === null) {
             feedback.textContent = "Drag a word into the blank first.";
@@ -77,9 +80,18 @@ export function initScenarioGame(onExit: () => void): { open: () => void } { //s
             return;
         }
 
-        // Correct: show the explanation, then go to the next question
+        // correct answer, gives explanation
         feedback.textContent = "Correct! " + question.explanation;
+        submitButton.hidden = true;  // answer locked in
+        nextButton.hidden = false;   // let player continue
+        if (questionNumber === SCENARIOS.length - 1) {
+            nextButton.textContent = "Finish";
+        }
+    }
+
+    function handleNext(): void {
         questionNumber = questionNumber + 1;
+        feedback.textContent = "";
         if (questionNumber === SCENARIOS.length) {
             leave();
         } else {
@@ -87,20 +99,22 @@ export function initScenarioGame(onExit: () => void): { open: () => void } { //s
         }
     }
 
-    // Connect the page to the functions above
+    // connects to page 
     blank.addEventListener("dragover", function (event) {
-        event.preventDefault(); // lets the blank accept drops
+        event.preventDefault(); // cancels default browser behavior, browser doesnt accept drops usually
     });
     blank.addEventListener("drop", handleDrop);
     submitButton.addEventListener("click", handleSubmit);
     backButton.addEventListener("click", leave);
+    nextButton.addEventListener("click", handleNext);
 
     // The menu calls this to start the game
     function open(): void {
         questionNumber = 0;
-        feedback.textContent = "";
+        feedback.textContent = ""; //clear messages 
         showQuestion();
         screen.hidden = false;
+        nextButton.textContent = "Next";
     }
 
     return { open: open };

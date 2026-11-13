@@ -28,6 +28,6 @@ export const SCENARIOS: Scenario[] = [
     }
 ]
 
-export function checkAnswer(scneario: Scenario, choice: GateChoice): boolean {
-    return scneario.answer === choice;
+export function checkAnswer(scenario: Scenario, choice: GateChoice): boolean {
+    return scenario.answer === choice;
 }
