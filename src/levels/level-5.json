@@ -2,6 +2,11 @@
     "id": 5,
     "pieces": [
         {
+            "type": "block",
+            "x": 5,
+            "y": 0
+        },
+        {
             "type": "input",
             "on": false,
             "x": 1,
@@ -23,6 +28,16 @@
             "type": "high",
             "x": 1,
             "y": 4
+        },
+        {
+            "type": "block",
+            "x": 5,
+            "y": 4
+        },
+        {
+            "type": "block",
+            "x": 5,
+            "y": 5
         }
     ]
 }

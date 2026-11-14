@@ -2,14 +2,13 @@
     "id": 6,
     "pieces": [
         {
-            "type": "high",
-            "x": 1,
-            "y": 1
+            "type": "block",
+            "x": 3,
+            "y": 0
         },
         {
-            "type": "wire",
-            "fixed": false,
-            "x": 2,
+            "type": "high",
+            "x": 1,
             "y": 1
         },
         {
@@ -20,10 +19,9 @@
             "y": 1
         },
         {
-            "type": "wire",
-            "fixed": true,
+            "type": "block",
             "x": 5,
-            "y": 2
+            "y": 1
         },
         {
             "type": "gate",
@@ -59,6 +57,11 @@
             "type": "input",
             "on": false,
             "x": 1,
+            "y": 5
+        },
+        {
+            "type": "block",
+            "x": 6,
             "y": 5
         }
     ]
