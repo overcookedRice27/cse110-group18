@@ -13,19 +13,24 @@ export function setCreatorView(enabled: boolean): void {
 
 export const CREATOR_PANEL = {
     X: 0,
-    Y: 40,
+    Y: 10,
     WIDTH: 168,
-    HEIGHT: 430,
-    PLAYER_HEIGHT: 274,
+    // Fit all ten items above the controls at y=500, leaving a 16px gap.
+    HEIGHT: 474,
+    PLAYER_HEIGHT: 244,
     PADDING: 10,
-    ITEM_HEIGHT: 45,
-    ITEM_SPACING: 52,
+    // Compact the selections so HIGH and LOW fit without touching Import Level.
+    ITEM_HEIGHT: 40,
+    ITEM_SPACING: 46,
     ITEM_FONT_SIZE: 24,
     ITEM_CORNER_RADIUS: 8,
     BORDER_WIDTH: 2,
     BORDER_RADIUS: 10,
     CREATOR_ITEMS: [
         "Input",
+        // Constant sources are available only in the level creator.
+        "HIGH",
+        "LOW",
         "Exit",
         "Wire",
         "Block",

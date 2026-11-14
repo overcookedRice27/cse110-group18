@@ -1,0 +1,49 @@
+{
+    "id": 9,
+    "pieces": [
+        {
+            "type": "input",
+            "on": false,
+            "x": 0,
+            "y": 0
+        },
+        {
+            "type": "gate",
+            "gateType": "XOR",
+            "fixed": true,
+            "x": 2,
+            "y": 0
+        },
+        {
+            "type": "gate",
+            "gateType": "AND",
+            "fixed": true,
+            "x": 5,
+            "y": 1
+        },
+        {
+            "type": "exit",
+            "x": 8,
+            "y": 2
+        },
+        {
+            "type": "input",
+            "on": false,
+            "x": 0,
+            "y": 3
+        },
+        {
+            "type": "gate",
+            "gateType": "XOR",
+            "fixed": true,
+            "x": 2,
+            "y": 3
+        },
+        {
+            "type": "input",
+            "on": false,
+            "x": 0,
+            "y": 5
+        }
+    ]
+}

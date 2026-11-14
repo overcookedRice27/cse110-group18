@@ -67,6 +67,8 @@ export function createWire(
         }
         if (
             wireGroup.getAttr("elementType") !== "input" ||
+            // Both 0 and 1 mark locked inputs; only ordinary inputs may toggle.
+            wireGroup.getAttr("constantValue") !== undefined ||
             wireGroup.getAttr("gridX") === undefined
         )
             return;
@@ -164,6 +166,27 @@ export function createInput(on = false): Konva.Group {
         }),
     );
     return input;
+}
+
+// Constant sources share the input sprite and connection behavior.
+function createConstantInput(value: 0 | 1): Konva.Group {
+    // Reuse input placement and signal handling, initializing the fixed output.
+    const input = createInput(value === 1);
+    // The click handler and level exporter use this marker to preserve the constant.
+    input.setAttr("constantValue", value);
+    // Replace ON/OFF with the fixed source name on the same sprite.
+    (input.findOne(".inputLabel") as Konva.Text).text(value === 1 ? "HIGH" : "LOW");
+    return input;
+}
+
+// Create a HIGH block that always supplies a 1 signal.
+export function createHigh(): Konva.Group {
+    return createConstantInput(1);
+}
+
+// Create a LOW block that always supplies a 0 signal.
+export function createLow(): Konva.Group {
+    return createConstantInput(0);
 }
 
 export function createExit(): Konva.Group {

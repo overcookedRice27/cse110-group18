@@ -1,0 +1,65 @@
+{
+    "id": 6,
+    "pieces": [
+        {
+            "type": "high",
+            "x": 1,
+            "y": 1
+        },
+        {
+            "type": "wire",
+            "fixed": false,
+            "x": 2,
+            "y": 1
+        },
+        {
+            "type": "gate",
+            "gateType": "XOR",
+            "fixed": true,
+            "x": 3,
+            "y": 1
+        },
+        {
+            "type": "wire",
+            "fixed": true,
+            "x": 5,
+            "y": 2
+        },
+        {
+            "type": "gate",
+            "gateType": "AND",
+            "fixed": true,
+            "x": 6,
+            "y": 2
+        },
+        {
+            "type": "input",
+            "on": true,
+            "x": 1,
+            "y": 3
+        },
+        {
+            "type": "wire",
+            "fixed": false,
+            "x": 2,
+            "y": 3
+        },
+        {
+            "type": "wire",
+            "fixed": false,
+            "x": 8,
+            "y": 3
+        },
+        {
+            "type": "exit",
+            "x": 9,
+            "y": 3
+        },
+        {
+            "type": "input",
+            "on": false,
+            "x": 1,
+            "y": 5
+        }
+    ]
+}

@@ -89,6 +89,27 @@ describe("new game", () =>
     expect(elements.get("level-grid")!.children).toHaveLength(10);
   });
 
+  // Exercise the real selection handler for every registry entry, including Level 10.
+  it.each(Array.from({ length: 10 }, (_, index) => index + 1))(
+    "opens registered Level %i when its enabled button is clicked",
+    async (id) =>
+    {
+      const showPlayerLevel = vi.fn().mockResolvedValue(undefined);
+      vi.doMock("../src/konva/main", () => ({ showPlayerLevel }));
+      vi.stubGlobal("HTMLButtonElement", MenuElement);
+      const button = Object.assign(new MenuElement(), {
+        id: `level-${id}-btn`, disabled: false,
+      });
+      const event = new Event("click");
+      Object.defineProperty(event, "target", { value: button });
+      elements.get("level-grid")!.dispatchEvent(event);
+      const { getLevel } = await import("../src/levels/registry");
+      await vi.waitFor(() => expect(showPlayerLevel).toHaveBeenCalledWith(getLevel(id)));
+      expect(elements.get("game-view")!.hidden).toBe(false);
+      expect(alertNotice).not.toHaveBeenCalled();
+    },
+  );
+
   it("restores progress and opens the saved current level when Continue is clicked", async () =>
   {
     const showPlayerLevel = vi.fn().mockResolvedValue(undefined);
