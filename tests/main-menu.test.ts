@@ -29,7 +29,7 @@ const el = (id: string) => document.getElementById(id) as HTMLElement;
 
 // Which screens are showing right now
 function visibleScreens(): string[] {
-    return ["main-menu", "level-screen", "game-view"].filter((id) => !el(id).hidden);
+    return ["main-menu", "level-screen", "game-view", "mini-game-menu"].filter((id) => !el(id).hidden);
 }
 
 let alertSpy: ReturnType<typeof vi.spyOn>;
@@ -104,11 +104,10 @@ describe("main menu buttons go to the right place", () => {
         expect(visibleScreens()).toEqual(["game-view"]);
     });
 
-    it("Mini Games shows its message and stays on the menu", async () => {
+      it("Mini Games opens the mini game menu", async () => {
         await loadMenu();
         el("mini-game-btn").click();
-        expect(alertSpy).toHaveBeenCalledWith("Opening mini games menu...");
-        expect(visibleScreens()).toEqual(["main-menu"]);
+        expect(visibleScreens()).toEqual(["mini-game-menu"]);
     });
 
     it("Settings shows its message and stays on the menu", async () => {
