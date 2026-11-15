@@ -81,6 +81,16 @@ stage.on("levelExitPowered", () =>
     if (!isCreatorView && activeLevelId !== null)
     {
         completeLevel(activeLevelId);
+        // Persist completion immediately so later levels stay unlocked after reload.
+        try
+        {
+            saveLevel(getLevelData(activeLevelId), getHighestCompleted());
+            saveStatus.textContent = "Progress saved.";
+        }
+        catch
+        {
+            saveStatus.textContent = "Level completed, but progress could not be saved. Try Save again.";
+        }
     }
 });
 

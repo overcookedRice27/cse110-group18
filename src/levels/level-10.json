@@ -1,0 +1,60 @@
+{
+    "id": 10,
+    "pieces": [
+        {
+            "type": "input",
+            "on": false,
+            "x": 0,
+            "y": 0
+        },
+        {
+            "type": "gate",
+            "gateType": "AND",
+            "fixed": true,
+            "x": 2,
+            "y": 0
+        },
+        {
+            "type": "block",
+            "x": 6,
+            "y": 0
+        },
+        {
+            "type": "gate",
+            "gateType": "AND",
+            "fixed": true,
+            "x": 5,
+            "y": 1
+        },
+        {
+            "type": "high",
+            "x": 0,
+            "y": 3
+        },
+        {
+            "type": "block",
+            "x": 3,
+            "y": 4
+        },
+        {
+            "type": "block",
+            "x": 5,
+            "y": 4
+        },
+        {
+            "type": "low",
+            "x": 0,
+            "y": 5
+        },
+        {
+            "type": "block",
+            "x": 6,
+            "y": 5
+        },
+        {
+            "type": "exit",
+            "x": 9,
+            "y": 5
+        }
+    ]
+}

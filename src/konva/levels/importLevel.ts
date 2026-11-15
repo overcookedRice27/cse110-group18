@@ -28,6 +28,9 @@ export async function importLevel(
             (piece.type !== "gate" &&
                 piece.type !== "wire" &&
                 piece.type !== "input" &&
+                // Constant source types encode their state without an `on` field.
+                piece.type !== "high" &&
+                piece.type !== "low" &&
                 piece.type !== "exit" &&
                 piece.type !== "block") ||
             !Number.isInteger(piece.x) ||

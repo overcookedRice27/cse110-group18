@@ -24,7 +24,13 @@ export function getLevelData(id: number): LevelData {
                 pieces.push({ type: "wire", fixed, x, y });
             } else if (element.getAttr("elementType") === "input") {
                 const on = element.getAttr("powerSource") === true;
-                pieces.push({ type: "input", on, x, y });
+                // Keep constant sources distinct so loading cannot turn them into toggles.
+                const constantValue = element.getAttr("constantValue");
+                if (constantValue !== undefined) {
+                    pieces.push({ type: constantValue === 1 ? "high" : "low", x, y });
+                } else {
+                    pieces.push({ type: "input", on, x, y });
+                }
             } else if (element.getAttr("elementType") === "exit") {
                 pieces.push({ type: "exit", x, y });
             } else if (element.getAttr("elementType") === "block") {

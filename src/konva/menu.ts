@@ -23,7 +23,7 @@ minigamesButton.position({ x: 400, y: 300 });
 settingsButton.position({ x: 400, y: 400 });
 
 //Temporary test functionality, implement screen switching later
-newGameButton.on("click", () => {alert("new game alert");});   //dummy testing
+newGameButton.on("click", () => {alert("new game alert");});
 
 continueButton.on("click", () => {alert("continue alert");});
 

@@ -1,4 +1,4 @@
-const LEVEL_COUNT = 10;
+import { LEVEL_COUNT } from "../levels/registry";
 
 type LevelState = "finished" | "current" | "locked";
 
