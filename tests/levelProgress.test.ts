@@ -4,7 +4,7 @@ import Konva from "konva";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Keep the real validation, completion, and storage handlers. Replace rendering
-// and board loading with a solved-board fixture; circuit solving is tested elsewhere.
+// and board loading with exit fixtures; circuit solving is tested elsewhere.
 vi.mock("konva", async (importOriginal) => {
     const { default: actual } = await importOriginal<typeof import("konva")>();
     return { default: { ...actual, Stage: actual.Group, Layer: actual.Group } };
@@ -14,7 +14,7 @@ vi.mock("../src/konva/button", () => ({ createButton: () => new Konva.Group() })
 vi.mock("../src/konva/levels/creatorPanel", () => ({ createCreatorPanel: () => new Konva.Group() }));
 vi.mock("../src/konva/levels/loadLevel", () => ({
     // A powered exit represents a correctly solved board for validation.
-    loadLevel: (grid: Konva.Group) => grid.add(new Konva.Group({ elementType: "exit", powered: true })),
+    loadLevel: vi.fn((grid: Konva.Group) => grid.add(new Konva.Group({ elementType: "exit", powered: true }))),
 }));
 // Saved-board geometry is outside these tests; only completion and level IDs matter.
 vi.mock("../src/konva/levels/importLevel", () => ({ importLevel: vi.fn() }));
@@ -38,6 +38,39 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("player completion persistence", () => {
+    // An unpowered exit must fail validation without writing to storage or marking
+    // the level complete. Check both a fresh game and preservation of an older save.
+    // false: fail Level 1 with no save; true: fail Level 2 after saving Level 1.
+    it.each([false, true])("does not save failed validation (existing save: %s)", async (existingSave) => {
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const { loadLevel } = await import("../src/konva/levels/loadLevel");
+        const { getHighestCompleted, restoreProgress } = await import("../src/html/levels");
+        const { saveLevel } = await import("../src/konva/save");
+        // Seed completed progress only for the existing-save case, leaving Level 2 unlocked.
+        if (existingSave) {
+            restoreProgress(1);
+            saveLevel({ id: 1, pieces: [] }, 1);
+        }
+        // Retain the exact saved text (or null) to detect overwrites or new saves.
+        const previousSave = localStorage.getItem("logicGame.save");
+        // Override only this board so the real validation handler sees a failed circuit.
+        vi.mocked(loadLevel).mockImplementationOnce((grid) => {
+            grid.add(new Konva.Group({ elementType: "exit", powered: false }));
+        });
+        await showPlayerLevel({ id: existingSave ? 2 : 1, pieces: [] });
+        // Observe writes after setup so seeding the older save does not count.
+        const write = vi.spyOn(Storage.prototype, "setItem");
+        // Click the real Validate control rather than calling a test-only handler.
+        document.getElementById("validate-circuit-btn")!.click();
+
+        // Confirm validation actually failed, then verify it neither wrote storage
+        // nor replaced the older board nor advanced completion in this session.
+        expect(document.getElementById("circuit-status")!.textContent).toContain("Level Failed");
+        expect(write).not.toHaveBeenCalled();
+        expect(localStorage.getItem("logicGame.save")).toBe(previousSave);
+        expect(getHighestCompleted()).toBe(existingSave ? 1 : 0);
+    });
+
     // Validate Level 1 followed by Level 2 without clicking Save. Verify that each
     // completion updates both session progress and the persisted level snapshot,
     // then verify that saved completion restores after session state is reset.
