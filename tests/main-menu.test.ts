@@ -90,6 +90,23 @@ describe("main menu buttons go to the right place", () => {
         expect(showPlayerLevel).toHaveBeenCalledTimes(1);
     });
 
+    // Reloading and opening Levels directly must retain saved completion/unlocks.
+    it("restores completion through Level 2 without requiring Continue", async () => {
+        localStorage.setItem("logicGame.save", JSON.stringify({
+            version: 1, highestCompleted: 2, level: { id: 2, pieces: [] },
+        }));
+        await loadMenu();
+        el("levels-btn").click();
+        expect(el("level-1-btn").className).toContain("finished");
+        expect(el("level-2-btn").className).toContain("finished");
+        expect((el("level-3-btn") as HTMLButtonElement).disabled).toBe(false);
+        expect((el("level-4-btn") as HTMLButtonElement).disabled).toBe(true);
+        el("level-3-btn").click();
+        await vi.waitFor(() => expect(showPlayerLevel).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 3 }),
+        ));
+    });
+
     it("Levels opens the level select screen", async () => {
         await loadMenu();
         el("levels-btn").click();

@@ -1,0 +1,43 @@
+{
+    "id": 5,
+    "pieces": [
+        {
+            "type": "block",
+            "x": 5,
+            "y": 0
+        },
+        {
+            "type": "input",
+            "on": false,
+            "x": 1,
+            "y": 1
+        },
+        {
+            "type": "gate",
+            "gateType": "AND",
+            "fixed": true,
+            "x": 4,
+            "y": 1
+        },
+        {
+            "type": "exit",
+            "x": 9,
+            "y": 2
+        },
+        {
+            "type": "high",
+            "x": 1,
+            "y": 4
+        },
+        {
+            "type": "block",
+            "x": 5,
+            "y": 4
+        },
+        {
+            "type": "block",
+            "x": 5,
+            "y": 5
+        }
+    ]
+}

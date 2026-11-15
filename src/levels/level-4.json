@@ -1,0 +1,43 @@
+{
+    "id": 4,
+    "pieces": [
+        {
+            "type": "block",
+            "x": 2,
+            "y": 0
+        },
+        {
+            "type": "input",
+            "on": false,
+            "x": 1,
+            "y": 1
+        },
+        {
+            "type": "gate",
+            "gateType": "AND",
+            "fixed": false,
+            "x": 3,
+            "y": 1
+        },
+        {
+            "type": "exit",
+            "x": 7,
+            "y": 2
+        },
+        {
+            "type": "low",
+            "x": 1,
+            "y": 3
+        },
+        {
+            "type": "block",
+            "x": 2,
+            "y": 4
+        },
+        {
+            "type": "block",
+            "x": 2,
+            "y": 5
+        }
+    ]
+}

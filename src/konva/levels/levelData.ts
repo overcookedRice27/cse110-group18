@@ -11,6 +11,9 @@ export type LevelPiece =
       }
     | { type: "wire"; fixed?: boolean; x: number; y: number }
     | { type: "input"; on: boolean; x: number; y: number }
+    // Constant source types encode the signal value and need only a position.
+    | { type: "high"; x: number; y: number }
+    | { type: "low"; x: number; y: number }
     | { type: "exit"; x: number; y: number }
     | { type: "block"; x: number; y: number };
 

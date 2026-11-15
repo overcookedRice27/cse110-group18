@@ -1,0 +1,95 @@
+{
+    "id": 2,
+    "pieces": [
+        {
+            "type": "block",
+            "x": 3,
+            "y": 0
+        },
+        {
+            "type": "block",
+            "x": 7,
+            "y": 0
+        },
+        {
+            "type": "block",
+            "x": 2,
+            "y": 1
+        },
+        {
+            "type": "input",
+            "on": false,
+            "x": 1,
+            "y": 2
+        },
+        {
+            "type": "wire",
+            "fixed": true,
+            "x": 3,
+            "y": 2
+        },
+        {
+            "type": "wire",
+            "fixed": true,
+            "x": 6,
+            "y": 2
+        },
+        {
+            "type": "block",
+            "x": 8,
+            "y": 2
+        },
+        {
+            "type": "block",
+            "x": 2,
+            "y": 3
+        },
+        {
+            "type": "block",
+            "x": 6,
+            "y": 3
+        },
+        {
+            "type": "block",
+            "x": 3,
+            "y": 4
+        },
+        {
+            "type": "block",
+            "x": 5,
+            "y": 4
+        },
+        {
+            "type": "wire",
+            "fixed": true,
+            "x": 6,
+            "y": 4
+        },
+        {
+            "type": "wire",
+            "fixed": true,
+            "x": 8,
+            "y": 4
+        },
+        {
+            "type": "exit",
+            "x": 9,
+            "y": 4
+        },
+        {
+            "type": "block",
+            "x": 4,
+            "y": 5
+        },
+        {
+            "type": "block",
+            "x": 6,
+            "y": 5
+        },
+        {
+            "type": "block",
+            "x": 7,
+            "y": 5
+        }
+    ]
+}

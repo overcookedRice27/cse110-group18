@@ -1,7 +1,7 @@
 import Konva from "konva";
 import { COLORS, CREATOR_PANEL, GRID } from "../constants";
 import { createGate, gateCells } from "../gate";
-import { createBlock, createExit, createInput, createWire } from "../wire";
+import { createBlock, createExit, createHigh, createLow, createInput, createWire } from "../wire";
 import type { GateType } from "./levelData";
 
 export function createCreatorPanel(
@@ -9,7 +9,8 @@ export function createCreatorPanel(
     creatorMode: boolean,
 ): Konva.Layer {
     const panel = new Konva.Layer();
-    let names: readonly (GateType | "Wire" | "Input" | "Exit" | "Block")[] =
+    // The creator palette includes constant inputs alongside the player pieces.
+    let names: readonly (GateType | "Wire" | "Input" | "HIGH" | "LOW" | "Exit" | "Block")[] =
         CREATOR_PANEL.PLAYER_ITEMS;
     let panelHeight = CREATOR_PANEL.PLAYER_HEIGHT;
     if (creatorMode) {
@@ -73,6 +74,12 @@ export function createCreatorPanel(
             let height = GRID.CELL_SIZE;
             if (name === "Input") {
                 element = createInput();
+            } else if (name === "HIGH") {
+                // HIGH uses the input appearance with a permanently active signal.
+                element = createHigh();
+            } else if (name === "LOW") {
+                // LOW uses the input appearance with a permanently inactive signal.
+                element = createLow();
             } else if (name === "Exit") {
                 element = createExit();
             } else if (name === "Block") {

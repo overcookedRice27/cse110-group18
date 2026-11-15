@@ -2,7 +2,8 @@ import type { LevelData } from "./levels/levelData";
 
 const SAVE_KEY = "logicGame.save"; //data stored in localStorage
 const SAVE_VERSION = 1;
-const TOTAL_LEVELS = 10;
+// Share the playable level count with selection and lookup.
+import { LEVEL_COUNT as TOTAL_LEVELS } from "../levels/registry";
 
 type LevelSave = {
     version: number;
