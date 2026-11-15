@@ -21,10 +21,14 @@ const levelCreatorBtn = document.getElementById(
 const backToMenuBtn = document.getElementById(
     "back-to-menu-btn",
 ) as HTMLButtonElement;
+const settingsBackBtn = document.getElementById(
+    "settings-back-btn",
+) as HTMLButtonElement;
 const gameBackBtn = document.getElementById("game-back-btn") as HTMLButtonElement;
 
 const mainMenuScreen = document.getElementById("main-menu") as HTMLElement;
 const levelScreen = document.getElementById("level-screen") as HTMLElement;
+const settingsScreen = document.getElementById("settings-screen") as HTMLElement;
 const levelGrid = document.getElementById("level-grid") as HTMLElement;
 const gameScreen = document.getElementById("game-view") as HTMLElement;
 
@@ -37,6 +41,7 @@ function refreshMenu(): void {
 
 function showMainMenu(): void {
     levelScreen.hidden = true;
+    settingsScreen.hidden = true;
     gameScreen.hidden = true;
     mainMenuScreen.hidden = false;
     refreshMenu(); // new
@@ -46,6 +51,7 @@ function showMainMenu(): void {
 function showLevelScreen(): void {
     renderLevelGrid(levelGrid);
     mainMenuScreen.hidden = true;
+    settingsScreen.hidden = true;
     gameScreen.hidden = true;
     levelScreen.hidden = false;
 }
@@ -112,6 +118,10 @@ backToMenuBtn.addEventListener("click", () => {
     showMainMenu();
 });
 
+settingsBackBtn.addEventListener("click", () => {
+    showMainMenu();
+});
+
 gameBackBtn.addEventListener("click", () => {
     showMainMenu();
 });
@@ -121,7 +131,10 @@ miniGameBtn.addEventListener("click", () => {
 });
 
 settingsBtn.addEventListener("click", () => {
-    alert("Opening settings panel...");
+    mainMenuScreen.hidden = true;
+    levelScreen.hidden = true;
+    gameScreen.hidden = true;
+    settingsScreen.hidden = false;
 });
 
 // Resolve every level button through the shared registry of playable layouts.

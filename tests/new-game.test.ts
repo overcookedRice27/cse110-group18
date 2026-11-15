@@ -38,8 +38,8 @@ describe("new game", () =>
     entries.clear();
     for (const id of [
       "continue-btn", "new-game-btn", "levels-btn", "mini-game-btn",
-      "settings-btn", "level-creator-btn", "back-to-menu-btn", "game-back-btn",
-      "main-menu", "level-screen", "level-grid", "game-view",
+      "settings-btn", "level-creator-btn", "back-to-menu-btn", "settings-back-btn", "game-back-btn",
+      "main-menu", "level-screen", "settings-screen", "level-grid", "game-view",
     ])
     {
       elements.set(id, new MenuElement());
@@ -92,6 +92,18 @@ describe("new game", () =>
     expect(elements.get("level-screen")!.hidden).toBe(false);
     expect(elements.get("game-view")!.hidden).toBe(true);
     expect(elements.get("level-grid")!.children).toHaveLength(10);
+  });
+
+  it("opens the how-to-play settings screen and returns to the menu", () =>
+  {
+    elements.get("settings-btn")!.dispatchEvent(new Event("click"));
+    expect(elements.get("main-menu")!.hidden).toBe(true);
+    expect(elements.get("settings-screen")!.hidden).toBe(false);
+    expect(elements.get("game-view")!.hidden).toBe(true);
+
+    elements.get("settings-back-btn")!.dispatchEvent(new Event("click"));
+    expect(elements.get("main-menu")!.hidden).toBe(false);
+    expect(elements.get("settings-screen")!.hidden).toBe(true);
   });
 
   // Exercise the real selection handler for every registry entry, including Level 10.
