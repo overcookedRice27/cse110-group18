@@ -6,7 +6,6 @@ class MenuElement extends EventTarget
   hidden = false;
   returnValue = "";
   children: MenuElement[] = [];
-  showModal = vi.fn();
 
   // Keep rendered level buttons available for assertions.
   append(child: MenuElement): void
