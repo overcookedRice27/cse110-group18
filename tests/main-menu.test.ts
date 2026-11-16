@@ -121,6 +121,23 @@ describe("main menu buttons go to the right place", () => {
         expect(visibleScreens()).toEqual(["game-view"]);
     });
 
+    // Result events are handled by the menu and re-render unlocked level buttons.
+    it("Continue from results opens level selection with the next level unlocked", async () => {
+        await loadMenu();
+        const { completeLevel } = await import("../src/html/levels");
+        completeLevel(1);
+        el("game-view").dispatchEvent(new Event("level-results-continue"));
+        expect(visibleScreens()).toEqual(["level-screen"]);
+        expect((el("level-2-btn") as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it("Exit from results returns to the title screen", async () => {
+        await loadMenu();
+        el("levels-btn").click();
+        el("game-view").dispatchEvent(new Event("level-results-exit"));
+        expect(visibleScreens()).toEqual(["main-menu"]);
+    });
+
     it("Mini Games shows its message and stays on the menu", async () => {
         await loadMenu();
         el("mini-game-btn").click();

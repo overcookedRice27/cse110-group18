@@ -2,6 +2,7 @@
 import { getLevel, LEVEL_COUNT } from "../levels/registry";
 import { renderLevelGrid, resetLevels, restoreProgress, getHighestCompleted } from "./levels";
 import { hasProgress, hasLocalSave, loadSavedLevel, clearLocalSave } from "../konva/save";
+import { signalLevelMetadata } from "../levels/level-metadata";
 import { LEVEL_CREATOR_ENABLED } from "../konva/constants";
 
 const continueBtn = document.getElementById(
@@ -36,6 +37,8 @@ function refreshMenu(): void {
 }
 
 function showMainMenu(): void {
+    // Menu time is excluded even if the player leaves before validating.
+    signalLevelMetadata({ type: "stop" });
     levelScreen.hidden = true;
     gameScreen.hidden = true;
     mainMenuScreen.hidden = false;
@@ -50,10 +53,19 @@ function showLevelScreen(): void {
     levelScreen.hidden = false;
 }
 
+// Result buttons request navigation through events instead of manipulating screens.
+gameScreen.addEventListener("level-results-continue", () => {
+    signalLevelMetadata({ type: "stop" });
+    showLevelScreen(); // Re-render to display the newly unlocked level.
+});
+gameScreen.addEventListener("level-results-exit", showMainMenu);
+
 // Start over with Level 1 after any existing save has been cleared.
 async function startNewGame(): Promise<void>
 {
     resetLevels();
+    // A confirmed fresh game starts with empty time and validation counters.
+    signalLevelMetadata({ type: "reset" });
     refreshMenu();
     const game = await import("../konva/main");
     await game.showPlayerLevel(getLevel(1));
