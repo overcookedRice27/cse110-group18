@@ -23,7 +23,7 @@
             <button id="new-game-btn" class="btn btn-primary py-3" type="button">New Game</button>
             <button id="levels-btn" class="btn btn-primary py-3" type="button">Levels</button>
             <button id="mini-game-btn" class="btn btn-primary py-3" type="button">Mini Games</button>
-            <button id="settings-btn" class="btn btn-primary py-3" type="button">Settings</button>
+            <button id="settings-btn" class="btn btn-primary py-3" type="button" data-bs-toggle="modal" data-bs-target="#how-to-play-modal">Settings</button>
             <button id="level-creator-btn" class="btn btn-primary py-3" type="button" hidden>Level Creator</button>
 
         </div>
@@ -39,71 +39,62 @@
         </div>
     </main>
 
-    <main id="settings-screen" class="container py-5" hidden>
-        <div class="mx-auto" style="max-width: 900px;">
-            <h1 class="display-4 text-center fw-bold mb-2">How to Play</h1>
-
-            <div class="row row-cols-1 row-cols-md-2 g-4">
-                <article class="col">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h2 class="h4 card-title">1. Find the goal</h2>
-                            <p class="card-text mb-0">Every <strong>EXIT</strong> must show <strong>ON</strong> to complete the level.</p>
-                        </div>
-                    </div>
-                </article>
-                <article class="col">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h2 class="h4 card-title">2. Set the input</h2>
-                            <p class="card-text mb-0">Click an input to switch it between <strong>ON</strong> and <strong>OFF</strong>.</p>
-                        </div>
-                    </div>
-                </article>
-                <article class="col">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h2 class="h4 card-title">3. Build a path</h2>
-                            <p class="card-text mb-0">Drag wires and gates from the side panel onto open spaces in the grid.</p>
-                        </div>
-                    </div>
-                </article>
-                <article class="col">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h2 class="h4 card-title">4. Connect the gates</h2>
-                            <p class="card-text mb-0">Run wires into a gate's left pins and continue from its right output pin.</p>
-                        </div>
-                    </div>
-                </article>
-                <article class="col">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h2 class="h4 card-title">5. Validate your circuit</h2>
-                            <p class="card-text mb-0">When all exits are ON, select <strong>Validate Circuit</strong>.</p>
-                        </div>
-                    </div>
-                </article>
-                <aside class="col" aria-labelledby="gate-cheat-sheet-title">
-                    <div class="card h-100 border-primary shadow-sm">
-                        <div class="card-body">
-                            <h2 id="gate-cheat-sheet-title" class="h4 card-title">Gate cheat sheet</h2>
-                            <ul class="mb-0 ps-3">
-                                <li><strong>AND:</strong> both inputs are ON</li>
-                                <li><strong>OR:</strong> either input is ON</li>
-                                <li><strong>XOR:</strong> exactly one input is ON</li>
-                                <li><strong>NOT:</strong> reverses its input</li>
-                            </ul>
-                        </div>
-                    </div>
-                </aside>
-            </div>
-
-            <div class="text-center mt-5">
-                <button id="settings-back-btn" class="btn btn-outline-secondary px-5 py-2" type="button">Back</button>
+    <div class="modal fade" id="how-to-play-modal" tabindex="-1" aria-labelledby="how-to-play-title" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 id="how-to-play-title" class="modal-title fs-4">How to play</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row row-cols-1 row-cols-md-2 g-3">
+                        <article class="col">
+                            <div class="card h-100"><div class="card-body">
+                                <h2 class="h5 card-title">Objective</h2>
+                                <p class="card-text mb-0">Validate the circuit by turning on the exit component.</p>
+                            </div></div>
+                        </article>
+                        <article class="col">
+                            <div class="card h-100"><div class="card-body">
+                                <h2 class="h5 card-title">Input</h2>
+                                <p class="card-text mb-0">Switch the input between on and off.</p>
+                            </div></div>
+                        </article>
+                        <article class="col">
+                            <div class="card h-100"><div class="card-body">
+                                <h2 class="h5 card-title">Building circuit path</h2>
+                                <p class="card-text mb-0">Drag logic gates from the side panel onto the open grid spaces.</p>
+                            </div></div>
+                        </article>
+                        <article class="col">
+                            <div class="card h-100"><div class="card-body">
+                                <h2 class="h5 card-title">Connect the gates</h2>
+                                <p class="card-text mb-0">Use wires on the gate's left and right pins.</p>
+                            </div></div>
+                        </article>
+                        <article class="col">
+                            <div class="card h-100"><div class="card-body">
+                                <h2 class="h5 card-title">Validate</h2>
+                                <p class="card-text mb-0">When all exits are on, validate your circuit to complete the level.</p>
+                            </div></div>
+                        </article>
+                        <aside class="col" aria-labelledby="gate-cheat-sheet-title">
+                            <div class="card h-100"><div class="card-body">
+                                <h2 id="gate-cheat-sheet-title" class="h5 card-title">Gate cheat sheet</h2>
+                                <ul class="mb-0 ps-3">
+                                    <li><strong>AND:</strong> both inputs are ON</li>
+                                    <li><strong>OR:</strong> either input is ON</li>
+                                    <li><strong>XOR:</strong> exactly one input is ON</li>
+                                    <li><strong>NOT:</strong> reverses its input</li>
+                                </ul>
+                            </div></div>
+                        </aside>
+                    </div> 
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
             </div>
         </div>
-    </main>
+    </div>
 
 
     <main id="game-view" hidden>
