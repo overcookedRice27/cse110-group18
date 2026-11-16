@@ -128,10 +128,18 @@ describe("main menu buttons go to the right place", () => {
         expect(visibleScreens()).toEqual(["main-menu"]);
     });
 
-    it("Settings shows its message and stays on the menu", async () => {
+    it("Settings is wired to the how-to-play Bootstrap modal", async () => {
         await loadMenu();
-        el("settings-btn").click();
-        expect(alertSpy).toHaveBeenCalledWith("Opening settings panel...");
+        const settingsButton = el("settings-btn");
+        const modal = el("how-to-play-modal");
+        const gotItButton = Array.from(
+            modal.querySelectorAll("button"),
+        ).find((button) => button.textContent?.trim() === "Got it");
+
+        expect(settingsButton.getAttribute("data-bs-toggle")).toBe("modal");
+        expect(settingsButton.getAttribute("data-bs-target")).toBe("#how-to-play-modal");
+        expect(modal.classList.contains("modal")).toBe(true);
+        expect(gotItButton?.getAttribute("data-bs-dismiss")).toBe("modal");
         expect(visibleScreens()).toEqual(["main-menu"]);
     });
 
