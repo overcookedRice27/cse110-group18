@@ -39,7 +39,8 @@ describe("new game", () =>
     for (const id of [
       "continue-btn", "new-game-btn", "levels-btn", "mini-game-btn",
       "settings-btn", "level-creator-btn", "back-to-menu-btn", "game-back-btn",
-      "main-menu", "level-screen", "level-grid", "game-view",
+      "main-menu", "level-screen", "level-grid", "game-view", "mini-game-menu", 
+      "mini-game-1-btn", "mini-game-2-btn", "mini-game-back-btn",
     ])
     {
       elements.set(id, new MenuElement());

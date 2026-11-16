@@ -27,6 +27,10 @@ const mainMenuScreen = document.getElementById("main-menu") as HTMLElement;
 const levelScreen = document.getElementById("level-screen") as HTMLElement;
 const levelGrid = document.getElementById("level-grid") as HTMLElement;
 const gameScreen = document.getElementById("game-view") as HTMLElement;
+const miniGameMenu = document.getElementById("mini-game-menu") as HTMLElement;
+const miniGame1Btn = document.getElementById("mini-game-1-btn") as HTMLButtonElement;
+const miniGame2Btn = document.getElementById("mini-game-2-btn") as HTMLButtonElement;
+const miniGameBackBtn = document.getElementById("mini-game-back-btn") as HTMLButtonElement;
 
 levelCreatorBtn.hidden = !LEVEL_CREATOR_ENABLED;
 
@@ -39,6 +43,7 @@ function showMainMenu(): void {
     levelScreen.hidden = true;
     gameScreen.hidden = true;
     mainMenuScreen.hidden = false;
+    miniGameMenu.hidden = true;
     refreshMenu(); // new
     //reloads screen to re-check save whenever menu shown
 }
@@ -48,8 +53,16 @@ function showLevelScreen(): void {
     mainMenuScreen.hidden = true;
     gameScreen.hidden = true;
     levelScreen.hidden = false;
+    miniGameMenu.hidden = true;
 }
 
+function showMiniGameMenu(): void {
+    mainMenuScreen.hidden = true;
+    levelScreen.hidden = true;
+    gameScreen.hidden = true;
+    miniGameMenu.hidden = false;
+}
+// Reset session progress and open the first level when no save exists.
 // Start over with Level 1 after any existing save has been cleared.
 async function startNewGame(): Promise<void>
 {
@@ -116,9 +129,25 @@ gameBackBtn.addEventListener("click", () => {
     showMainMenu();
 });
 
-miniGameBtn.addEventListener("click", () => {
-    alert("Opening mini games menu...");
+miniGameBtn.addEventListener("click", showMiniGameMenu);
+
+// Placeholders until the real truth table game is connected
+miniGame1Btn.addEventListener("click", () => alert("Mini Game 1 coming soon!"));
+
+// Scenario mini game is loaded only when its button is clicked,
+// so the main wire game (and its tests) never touch it.
+let scenarioGame: { open: () => void } | null = null;
+
+miniGame2Btn.addEventListener("click", async () => {
+    if (!scenarioGame) {
+        const { initScenarioGame } = await import("./scenario-mini-game/scenarioUI");
+        scenarioGame = initScenarioGame(showMiniGameMenu);
+    }
+    miniGameMenu.hidden = true;
+    scenarioGame.open();
 });
+
+miniGameBackBtn.addEventListener("click", showMainMenu);
 
 settingsBtn.addEventListener("click", () => {
     alert("Opening settings panel...");
