@@ -9,12 +9,22 @@ type LevelSave = {
     version: number;
     highestCompleted: number;
     level: LevelData;
+    specialAbilityCharge?: number;
 };
 
 // Store a board snapshot and progress using one shared format for all player levels.
-export function saveLevel(level: LevelData, highestCompleted: number): void
-{
-    const data: LevelSave = { version: SAVE_VERSION, highestCompleted, level };
+export function saveLevel(
+    level: LevelData,
+    highestCompleted: number,
+    specialAbilityCharge: number = 0
+): void {
+    const data: LevelSave = {
+        version: SAVE_VERSION,
+        highestCompleted,
+        level,
+        specialAbilityCharge,
+    };
+
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
 }
 
