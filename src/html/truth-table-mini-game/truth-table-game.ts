@@ -8,8 +8,15 @@ import {
     nextRound,
     placeToken,
     type Bit,
+    type GateName,
     type Round,
 } from "../../minigames/truthTable";
+
+const GATE_SYMBOL: Record<GateName, string> = {
+    AND: "&",
+    OR: "|",
+    XOR: "^",
+};
 
 export function initTruthTableGame(onExit: () => void): { open: () => void } {
     const $ = (id: string) => document.getElementById(id) as HTMLElement;
@@ -21,6 +28,7 @@ export function initTruthTableGame(onExit: () => void): { open: () => void } {
     const rule = $("tt-rule");
     const nextBtn = $("tt-next-btn") as HTMLButtonElement;
     const backBtn = $("tt-back-btn");
+    const corner = $("tt-corner");
 
     let round: Round = createRound(1); // the round being played
 
@@ -28,6 +36,7 @@ export function initTruthTableGame(onExit: () => void): { open: () => void } {
     function render(): void {
         // 1. Fill in the simple text pieces
         title.textContent = `Truth table: ${round.gate}`;
+        corner.textContent = `A ${GATE_SYMBOL[round.gate]} B`;
         progress.textContent = `Round ${round.roundNumber}/${TOTAL_ROUNDS}`;
         rule.textContent = GATE_TEXT[round.gate].rule;
         nextBtn.disabled = !isRoundComplete(round);
@@ -39,7 +48,7 @@ export function initTruthTableGame(onExit: () => void): { open: () => void } {
             const row = document.createElement("tr");
 
             const header = document.createElement("th"); // the row label (0 or 1)
-            header.textContent = String(a);
+            header.textContent = `A = ${a}`;
             row.appendChild(header);
 
             for (const b of [0, 1] as const) {
