@@ -5,6 +5,8 @@ import {
     createBlock,
     createExit,
     createInput,
+    createHigh,
+    createLow,
     createWire,
     updateWireAndNeighbors,
     updateWireElectricity,
@@ -22,6 +24,10 @@ export function loadLevel(grid: Konva.Layer, level: LevelData): void {
             size = gateCells;
         } else if (piece.type === "input") {
             element = createInput(piece.on);
+            size = { width: 1, height: 1 };
+        } else if (piece.type === "high" || piece.type === "low") {
+            // Recreate the locked source and its HIGH/LOW label in a single grid cell.
+            element = piece.type === "high" ? createHigh() : createLow();
             size = { width: 1, height: 1 };
         } else if (piece.type === "exit") {
             element = createExit();

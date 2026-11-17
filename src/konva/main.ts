@@ -1,6 +1,7 @@
 import Konva from "konva";
-import { LEVEL_CREATOR_MODE, setCreatorMode, STAGE } from "./constants";
+import { isCreatorView, setCreatorView, STAGE } from "./constants";
 import { createButton } from "./button";
+import { createLevelResults, LEVEL_RESULTS_EVENTS, type LevelResultSummary } from "./level-results";
 import { drawGridLayer as createGridLayer } from "./grid";
 import { exportLevel, getLevelData } from "./levels/exportLevel";
 import { importLevel } from "./levels/importLevel";
@@ -10,6 +11,8 @@ import type { LevelData } from "./levels/levelData";
 import { circuitGrid, clearGrid } from "./utils/circuitGrid";
 import { completeLevel, getHighestCompleted } from "../html/levels";
 import { loadSavedLevel, saveLevel } from "./save";
+import { checkCircuit } from "./wire";
+import { signalLevelMetadata, getLevelMetadata } from "../levels/level-metadata";
 
 const stage = new Konva.Stage({
     container: "game-screen",
@@ -23,6 +26,16 @@ grid.x(180);
 grid.y(50);
 
 stage.add(grid);
+const levelResults = createLevelResults();
+stage.add(levelResults);
+
+// Relay Konva button events to the HTML menu, which owns screen transitions.
+stage.on(LEVEL_RESULTS_EVENTS.CONTINUE, () => {
+    document.getElementById("game-view")?.dispatchEvent(new Event("level-results-continue"));
+});
+stage.on(LEVEL_RESULTS_EVENTS.EXIT, () => {
+    document.getElementById("game-view")?.dispatchEvent(new Event("level-results-exit"));
+});
 
 let activeLevelId: number | null = null;
 const saveButton = document.getElementById("level-save-btn") as HTMLButtonElement;
@@ -31,7 +44,7 @@ const saveStatus = document.getElementById("level-save-status") as HTMLElement;
 // Save the active player's board; creator layouts continue to use Export Level.
 saveButton.addEventListener("click", () =>
 {
-    if (activeLevelId === null || LEVEL_CREATOR_MODE)
+    if (activeLevelId === null || isCreatorView)
     {
         return;
     }
@@ -46,12 +59,66 @@ saveButton.addEventListener("click", () =>
     }
 });
 
+
+//Create a validate button and circuit status button with listener
+const validateButton = document.getElementById(
+    "validate-circuit-btn"
+) as HTMLButtonElement;
+
+const circuitStatus = document.getElementById(
+    "circuit-status"
+) as HTMLElement;
+
+validateButton.addEventListener("click", () => {
+    // A visible result already represents this validation; avoid duplicate attempts.
+    if (levelResults.visible()) return;
+    const exits = grid.find(
+        (node: Konva.Node) => node.getAttr("elementType") === "exit"
+    );
+
+    const powered = exits.length > 0 &&
+        exits.every((exit) => exit.getAttr("powered") === true);
+
+    const result = checkCircuit(powered);
+
+    circuitStatus.textContent = result.message;
+    circuitStatus.style.color = result.passed ? "green" : "red";
+
+    // Both successful and failed player validations end the current timed interval.
+    if (!isCreatorView && activeLevelId !== null) {
+        signalLevelMetadata({ type: "validated", levelId: activeLevelId, passed: result.passed });
+    }
+
+    if (result.passed) {
+        stage.fire("levelExitPowered");
+    }
+});
+
 // Complete only an active selected level, never a creator preview.
 stage.on("levelExitPowered", () =>
 {
-    if (!LEVEL_CREATOR_MODE && activeLevelId !== null)
+    if (!isCreatorView && activeLevelId !== null)
     {
         completeLevel(activeLevelId);
+        // Persist completion immediately so later levels stay unlocked after reload.
+        try
+        {
+            saveLevel(getLevelData(activeLevelId), getHighestCompleted());
+            saveStatus.textContent = "Progress saved.";
+        }
+        catch
+        {
+            saveStatus.textContent = "Level completed, but progress could not be saved. Try Save again.";
+        }
+        // Validation has stopped the timer; capture this level's time and failure count
+        
+        // for the result subtext without changing its recorded metadata.
+        const metadata = getLevelMetadata(activeLevelId);
+        const summary: LevelResultSummary = {
+            timeSpentMs: metadata.timeSpentMs,
+            incorrectValidations: metadata.incorrectValidations,
+        };
+        levelResults.fire(LEVEL_RESULTS_EVENTS.CLEARED, { summary });
     }
 });
 
@@ -61,6 +128,9 @@ let openCreator: () => void;
 // Load a selected layout into the shared stage in player mode.
 export async function showPlayerLevel(level: LevelData): Promise<void>
 {
+    // End the previous visit before loading; failed loads must not start a new timer.
+    signalLevelMetadata({ type: "stop" });
+    levelResults.hide();
     activeLevelId = null;
     openPlayer(level);
     const saved = loadSavedLevel();
@@ -68,6 +138,8 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
     {
         await importLevel(grid, new File([JSON.stringify(saved.level)], "saved-level.json"));
     }
+    // All menu entry points share this loader: level selection, Continue, and New Game.
+    signalLevelMetadata({ type: "start", levelId: level.id });
     saveButton.hidden = false;
     saveStatus.textContent = "";
 }
@@ -75,13 +147,16 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
 // Return the shared stage to its existing creator view and board.
 export function showLevelCreator(): void
 {
+    // Creator previews do not contribute to player metadata.
+    signalLevelMetadata({ type: "stop" });
+    levelResults.hide();
     activeLevelId = null;
     saveButton.hidden = true;
     saveStatus.textContent = "";
     openCreator();
 }
 
-if (LEVEL_CREATOR_MODE) {
+if (isCreatorView) {
     const creatorPanel = createCreatorPanel(grid, true);
     const playerPanel = createCreatorPanel(grid, false);
     playerPanel.hide();
@@ -146,18 +221,18 @@ if (LEVEL_CREATOR_MODE) {
     ) as HTMLButtonElement;
     viewButton.hidden = false;
     viewButton.addEventListener("click", () => {
-        if (LEVEL_CREATOR_MODE) {
+        if (isCreatorView) {
             creatorLevel = getLevelData(levelId);
         }
-        setCreatorMode(!LEVEL_CREATOR_MODE);
-        if (LEVEL_CREATOR_MODE && creatorLevel) {
+        setCreatorView(!isCreatorView);
+        if (isCreatorView && creatorLevel) {
             clearGrid();
             loadLevel(grid, creatorLevel);
             creatorLevel = null;
         }
-        controls.visible(LEVEL_CREATOR_MODE);
-        creatorPanel.visible(LEVEL_CREATOR_MODE);
-        playerPanel.visible(!LEVEL_CREATOR_MODE);
+        controls.visible(isCreatorView);
+        creatorPanel.visible(isCreatorView);
+        playerPanel.visible(!isCreatorView);
 
         // Gates occupy several cells, so update each piece only once.
         const pieces = new Set<Konva.Group>();
@@ -170,13 +245,13 @@ if (LEVEL_CREATOR_MODE) {
             const type = piece.getAttr("elementType");
             const fixed = piece.getAttr("fixed") === true;
             const draggable =
-                LEVEL_CREATOR_MODE ||
+                isCreatorView ||
                 ((type === "wire" || type === "gate") && !fixed);
             piece.draggable(draggable);
-            piece.findOne(".fixedLabel")?.visible(LEVEL_CREATOR_MODE && fixed);
+            piece.findOne(".fixedLabel")?.visible(isCreatorView && fixed);
         }
 
-        if (LEVEL_CREATOR_MODE) {
+        if (isCreatorView) {
             viewButton.textContent = "Player View";
         } else {
             viewButton.textContent = "Creator View";
@@ -186,7 +261,7 @@ if (LEVEL_CREATOR_MODE) {
     // Preserve the creator board through the existing view toggle before playing.
     openPlayer = (level) =>
     {
-        if (LEVEL_CREATOR_MODE)
+        if (isCreatorView)
         {
             viewButton.click();
         }
@@ -200,7 +275,7 @@ if (LEVEL_CREATOR_MODE) {
     // Restore creator controls when entering from the main menu.
     openCreator = () =>
     {
-        if (!LEVEL_CREATOR_MODE)
+        if (!isCreatorView)
         {
             viewButton.click();
         }

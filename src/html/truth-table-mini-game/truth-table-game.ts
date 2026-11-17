@@ -40,6 +40,10 @@ export function initTruthTableGame(onExit: () => void): { open: () => void } {
         progress.textContent = `Round ${round.roundNumber}/${TOTAL_ROUNDS}`;
         rule.textContent = GATE_TEXT[round.gate].rule;
         nextBtn.disabled = !isRoundComplete(round);
+        nextBtn.textContent = round.roundNumber === TOTAL_ROUNDS ? "Finish!" : "Next round";  
+        const isLastRound = round.roundNumber === TOTAL_ROUNDS;
+        nextBtn.classList.toggle("btn-success", isLastRound);
+        nextBtn.classList.toggle("btn-primary", !isLastRound);
 
         // 2. Clear the old table, then rebuild it
         tableBody.replaceChildren(); // empties the <tbody>
@@ -93,6 +97,7 @@ export function initTruthTableGame(onExit: () => void): { open: () => void } {
 
     function open(): void {
         round = createRound(1);
+        feedback.textContent = "";   
         screen.hidden = false;
         render();
     }
@@ -107,13 +112,12 @@ export function initTruthTableGame(onExit: () => void): { open: () => void } {
     nextBtn.addEventListener("click", () => {
         const next = nextRound(round);
         if (next === null) {
-            feedback.textContent = "You finished all available rounds! Return to main menu using the back button!";
-            nextBtn.disabled = true;
-        } else {
-            round = next;
-            feedback.textContent = "";
-            render();
+            exit();
+            return;
         }
+        round = next;
+        feedback.textContent = "";
+        render();
     });
 
     screen.querySelectorAll<HTMLElement>(".tt-token").forEach((tokenEl) => {

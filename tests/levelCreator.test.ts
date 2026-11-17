@@ -40,6 +40,31 @@ describe("level loading and export", () => {
         expect(getLevelData(7).id).toBe(7);
     });
 
+    it("preserves constant sources through import/export and prevents toggling", async () => {
+        // Separate the sources so HIGH cannot power the wire used to verify LOW.
+        const level: LevelData = {
+            id: 3,
+            pieces: [
+                { type: "high", x: 0, y: 0 },
+                { type: "wire", fixed: false, x: 1, y: 0 },
+                { type: "low", x: 0, y: 2 },
+                { type: "wire", fixed: false, x: 1, y: 2 },
+            ],
+        };
+        await importLevel(makeLayer(), makeFile(level));
+        // Clicking must preserve each source value, HIGH/LOW label, and wire signal.
+        for (const [y, value] of [[0, 1], [2, 0]]) {
+            const source = circuitGrid[y][0]!;
+            source.fire("click");
+            expect(source.getAttr("powerSource")).toBe(value === 1);
+            expect((source.findOne(".inputLabel") as Konva.Text).text()).toBe(value === 1 ? "HIGH" : "LOW");
+            expect(circuitGrid[y][1]!.getAttr("powered")).toBe(value === 1);
+        }
+        // Export must retain the source types for a later import.
+        expect(getLevelData(3).pieces).toEqual(expect.arrayContaining(level.pieces));
+        expect(getLevelData(3).pieces).toHaveLength(4);
+    });
+
     it("imports a valid layout and replaces the old board", async () => {
         const old = new Konva.Group();
         placeElement(old, 0, 0, 1, 1);

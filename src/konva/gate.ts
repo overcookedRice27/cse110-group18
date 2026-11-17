@@ -1,5 +1,5 @@
 import Konva from "konva";
-import { COLORS, GRID, LEVEL_CREATOR_MODE } from "./constants";
+import { COLORS, GRID, isCreatorView } from "./constants";
 import {
     getRelativeGridCoordinate,
     isPointerOverCreatorPanel,
@@ -18,7 +18,7 @@ const gateDimensions = {
 
 export function createGate(name: GateType, fixed = false): Konva.Group {
     const gateGroup = new Konva.Group({
-        draggable: LEVEL_CREATOR_MODE || !fixed,
+        draggable: isCreatorView || !fixed,
     });
 
     gateGroup.setAttr("elementType", "gate");
@@ -75,7 +75,7 @@ export function createGate(name: GateType, fixed = false): Konva.Group {
     gateGroup.add(fixedLabel);
 
     gateGroup.on("click", () => {
-        if (!LEVEL_CREATOR_MODE || gateGroup.getAttr("gridX") === undefined)
+        if (!isCreatorView || gateGroup.getAttr("gridX") === undefined)
             return;
         const fixed = !gateGroup.getAttr("fixed");
         gateGroup.setAttr("fixed", fixed);

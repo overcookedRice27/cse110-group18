@@ -1,5 +1,5 @@
 import Konva from "konva";
-import { COLORS, GRID, LEVEL_CREATOR_MODE } from "./constants";
+import { COLORS, GRID, isCreatorView } from "./constants";
 import {
     getRelativeGridCoordinate,
     isPointerOverCreatorPanel,
@@ -10,6 +10,12 @@ import type { GateType } from "./levels/levelData";
 
 export type WireShape = "straight" | "corner" | "tee" | "cross";
 
+export type SignalResult = {
+    exitState: string;
+    passed: boolean;
+    message: string;
+};
+
 type GridCoordinate = { x: number; y: number };
 
 export function createWire(
@@ -17,7 +23,7 @@ export function createWire(
     fixed = false,
 ): Konva.Group {
     const wireGroup = new Konva.Group({
-        draggable: LEVEL_CREATOR_MODE || !fixed,
+        draggable: isCreatorView || !fixed,
     });
 
     wireGroup.setAttrs({
@@ -51,7 +57,7 @@ export function createWire(
     wireGroup.on("click", () => {
         if (
             wireGroup.getAttr("elementType") === "wire" &&
-            LEVEL_CREATOR_MODE &&
+            isCreatorView &&
             wireGroup.getAttr("gridX") !== undefined
         ) {
             const fixed = !wireGroup.getAttr("fixed");
@@ -61,6 +67,8 @@ export function createWire(
         }
         if (
             wireGroup.getAttr("elementType") !== "input" ||
+            // Both 0 and 1 mark locked inputs; only ordinary inputs may toggle.
+            wireGroup.getAttr("constantValue") !== undefined ||
             wireGroup.getAttr("gridX") === undefined
         )
             return;
@@ -135,7 +143,7 @@ export function createWire(
 
 export function createInput(on = false): Konva.Group {
     const input = createWire();
-    input.draggable(LEVEL_CREATOR_MODE);
+    input.draggable(isCreatorView);
     input.destroyChildren();
     input.setAttrs({ elementType: "input", powerSource: on });
     input.add(
@@ -160,9 +168,30 @@ export function createInput(on = false): Konva.Group {
     return input;
 }
 
+// Constant sources share the input sprite and connection behavior.
+function createConstantInput(value: 0 | 1): Konva.Group {
+    // Reuse input placement and signal handling, initializing the fixed output.
+    const input = createInput(value === 1);
+    // The click handler and level exporter use this marker to preserve the constant.
+    input.setAttr("constantValue", value);
+    // Replace ON/OFF with the fixed source name on the same sprite.
+    (input.findOne(".inputLabel") as Konva.Text).text(value === 1 ? "HIGH" : "LOW");
+    return input;
+}
+
+// Create a HIGH block that always supplies a 1 signal.
+export function createHigh(): Konva.Group {
+    return createConstantInput(1);
+}
+
+// Create a LOW block that always supplies a 0 signal.
+export function createLow(): Konva.Group {
+    return createConstantInput(0);
+}
+
 export function createExit(): Konva.Group {
     const exit = createWire();
-    exit.draggable(LEVEL_CREATOR_MODE);
+    exit.draggable(isCreatorView);
     exit.destroyChildren();
     exit.setAttrs({ elementType: "exit", powered: false });
     exit.add(
@@ -189,7 +218,7 @@ export function createExit(): Konva.Group {
 
 export function createBlock(): Konva.Group {
     const block = createWire();
-    block.draggable(LEVEL_CREATOR_MODE);
+    block.draggable(isCreatorView);
     block.destroyChildren();
     block.setAttr("elementType", "block");
     block.add(
@@ -203,6 +232,26 @@ export function createBlock(): Konva.Group {
     );
     return block;
 }
+
+
+export function checkCircuit(poweredCheck: boolean): SignalResult {
+    const failure: SignalResult = {
+        exitState: "locked",
+        passed: false,
+        message: "Incorrect Circuit! Level Failed!",
+    };
+
+    if (poweredCheck !== true) {
+        return failure;
+    }
+
+    return {
+        exitState: "open",
+        passed: true,
+        message: "Correct Circuit! Level Complete!",
+    };
+}
+
 
 function getWireGridCoordinate(wireGroup: Konva.Group): GridCoordinate | null {
     const grid = wireGroup.getStage()?.findOne(".grid") as
@@ -534,12 +583,14 @@ export function updateWireElectricity(): void {
                 label.text("EXIT\nOFF");
             }
             // Notify the owning stage when an EXIT lights up.
-            if (powered)
-            {
-                exit.getStage()?.fire("levelExitPowered");
-            }
+            
         }
     }
+
+
+
+
+
 
     // Each pass can carry a signal through one more gate. Gate outputs are
     // applied together so the result does not depend on the order of the grid.
