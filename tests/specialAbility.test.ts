@@ -62,4 +62,43 @@ describe("Wall Breaker", () => {
         expect(useSpecialAbility()).toBe(0);
         expect(getCharge()).toBe(100);
     });
+
+    it("restores charge from a saved value", async () => {
+        const { getCharge, setCharge } =
+            await import("../src/konva/specialAbility");
+
+        setCharge(50);
+
+        expect(getCharge()).toBe(50);
+    });
+
+    it("resets charge for a new game", async () => {
+        const { getCharge, setCharge, increaseCharge } =
+            await import("../src/konva/specialAbility");
+
+        increaseCharge();
+        increaseCharge();
+
+        setCharge(0);
+
+        expect(getCharge()).toBe(0);
+    });
+
+    it("rejects negative charge values", async () => {
+        const { getCharge, setCharge } =
+            await import("../src/konva/specialAbility");
+
+        setCharge(-50);
+
+        expect(getCharge()).toBe(0);
+    });
+
+    it("caps restored charge at 100 percent", async () => {
+        const { getCharge, setCharge } =
+            await import("../src/konva/specialAbility");
+
+        setCharge(150);
+
+        expect(getCharge()).toBe(100);
+    });
 });

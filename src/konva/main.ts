@@ -12,7 +12,7 @@ import { circuitGrid, clearGrid } from "./utils/circuitGrid";
 import { completeLevel, getHighestCompleted } from "../html/levels";
 import { loadSavedLevel, saveLevel } from "./save";
 import { checkCircuit } from "./wire";
-import { useSpecialAbility, getCharge, increaseCharge } from "./specialAbility";
+import { useSpecialAbility, getCharge, increaseCharge, setCharge } from "./specialAbility";
 import { signalLevelMetadata, getLevelMetadata } from "../levels/level-metadata";
 
 const stage = new Konva.Stage({
@@ -51,7 +51,7 @@ saveButton.addEventListener("click", () =>
     }
     try
     {
-        saveLevel(getLevelData(activeLevelId), getHighestCompleted());
+        saveLevel(getLevelData(activeLevelId), getHighestCompleted(), getCharge());
         saveStatus.textContent = "Level saved.";
     }
     catch
@@ -130,6 +130,16 @@ if (specialButton && specialStatus) {
 
         if (removed > 0) {
             specialStatus.textContent = `${removed} walls destroyed!`;
+
+            try {
+                saveLevel(
+                    getLevelData(activeLevelId),
+                    getHighestCompleted(),
+                    getCharge()
+                );
+            } catch {
+                specialStatus.textContent += " Unable to save progress.";
+            }
         } else {
             specialStatus.textContent = "No walls available to destroy!";
         }
@@ -157,7 +167,7 @@ stage.on("levelExitPowered", () =>
         // Persist completion immediately so later levels stay unlocked after reload.
         try
         {
-            saveLevel(getLevelData(activeLevelId), getHighestCompleted());
+            saveLevel(getLevelData(activeLevelId), getHighestCompleted(), getCharge());
             saveStatus.textContent = "Progress saved.";
         }
         catch
@@ -188,6 +198,12 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
     activeLevelId = null;
     openPlayer(level);
     const saved = loadSavedLevel();
+    setCharge(saved?.specialAbilityCharge ?? 0);
+    updateChargeDisplay();
+
+    if (specialStatus) {
+        specialStatus.textContent = "";
+    }
     if (saved?.level.id === level.id)
     {
         await importLevel(grid, new File([JSON.stringify(saved.level)], "saved-level.json"));

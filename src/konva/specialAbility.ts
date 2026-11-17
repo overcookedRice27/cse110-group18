@@ -8,6 +8,10 @@ export function getCharge(): number {
     return charge;
 }
 
+export function setCharge(value: number): void {
+    charge = Math.max(0, Math.min(100, value));
+}
+
 export function increaseCharge(): void {
     charge = Math.min(100, charge + 50);
 }
