@@ -196,7 +196,7 @@ if (specialButton && specialStatus) {
 
             try {
                 saveLevel(
-                    getLevelData(activeLevelId),
+                    getLevelData(activeLevelId, activeRequiredGates),
                     getHighestCompleted(),
                     getCharge()
                 );
