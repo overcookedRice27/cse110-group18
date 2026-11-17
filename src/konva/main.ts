@@ -1,6 +1,7 @@
 import Konva from "konva";
 import { isCreatorView, setCreatorView, STAGE } from "./constants";
 import { createButton } from "./button";
+import { createLevelResults, LEVEL_RESULTS_EVENTS, type LevelResultSummary } from "./level-results";
 import { drawGridLayer as createGridLayer } from "./grid";
 import { exportLevel, getLevelData } from "./levels/exportLevel";
 import { importLevel } from "./levels/importLevel";
@@ -11,6 +12,7 @@ import { circuitGrid, clearGrid } from "./utils/circuitGrid";
 import { completeLevel, getHighestCompleted } from "../html/levels";
 import { loadSavedLevel, saveLevel } from "./save";
 import { checkCircuit } from "./wire";
+import { signalLevelMetadata, getLevelMetadata } from "../levels/level-metadata";
 
 const stage = new Konva.Stage({
     container: "game-screen",
@@ -24,6 +26,16 @@ grid.x(180);
 grid.y(50);
 
 stage.add(grid);
+const levelResults = createLevelResults();
+stage.add(levelResults);
+
+// Relay Konva button events to the HTML menu, which owns screen transitions.
+stage.on(LEVEL_RESULTS_EVENTS.CONTINUE, () => {
+    document.getElementById("game-view")?.dispatchEvent(new Event("level-results-continue"));
+});
+stage.on(LEVEL_RESULTS_EVENTS.EXIT, () => {
+    document.getElementById("game-view")?.dispatchEvent(new Event("level-results-exit"));
+});
 
 let activeLevelId: number | null = null;
 const saveButton = document.getElementById("level-save-btn") as HTMLButtonElement;
@@ -58,6 +70,8 @@ const circuitStatus = document.getElementById(
 ) as HTMLElement;
 
 validateButton.addEventListener("click", () => {
+    // A visible result already represents this validation; avoid duplicate attempts.
+    if (levelResults.visible()) return;
     const exits = grid.find(
         (node: Konva.Node) => node.getAttr("elementType") === "exit"
     );
@@ -69,6 +83,11 @@ validateButton.addEventListener("click", () => {
 
     circuitStatus.textContent = result.message;
     circuitStatus.style.color = result.passed ? "green" : "red";
+
+    // Both successful and failed player validations end the current timed interval.
+    if (!isCreatorView && activeLevelId !== null) {
+        signalLevelMetadata({ type: "validated", levelId: activeLevelId, passed: result.passed });
+    }
 
     if (result.passed) {
         stage.fire("levelExitPowered");
@@ -91,6 +110,15 @@ stage.on("levelExitPowered", () =>
         {
             saveStatus.textContent = "Level completed, but progress could not be saved. Try Save again.";
         }
+        // Validation has stopped the timer; capture this level's time and failure count
+        
+        // for the result subtext without changing its recorded metadata.
+        const metadata = getLevelMetadata(activeLevelId);
+        const summary: LevelResultSummary = {
+            timeSpentMs: metadata.timeSpentMs,
+            incorrectValidations: metadata.incorrectValidations,
+        };
+        levelResults.fire(LEVEL_RESULTS_EVENTS.CLEARED, { summary });
     }
 });
 
@@ -100,6 +128,9 @@ let openCreator: () => void;
 // Load a selected layout into the shared stage in player mode.
 export async function showPlayerLevel(level: LevelData): Promise<void>
 {
+    // End the previous visit before loading; failed loads must not start a new timer.
+    signalLevelMetadata({ type: "stop" });
+    levelResults.hide();
     activeLevelId = null;
     openPlayer(level);
     const saved = loadSavedLevel();
@@ -107,6 +138,8 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
     {
         await importLevel(grid, new File([JSON.stringify(saved.level)], "saved-level.json"));
     }
+    // All menu entry points share this loader: level selection, Continue, and New Game.
+    signalLevelMetadata({ type: "start", levelId: level.id });
     saveButton.hidden = false;
     saveStatus.textContent = "";
 }
@@ -114,6 +147,9 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
 // Return the shared stage to its existing creator view and board.
 export function showLevelCreator(): void
 {
+    // Creator previews do not contribute to player metadata.
+    signalLevelMetadata({ type: "stop" });
+    levelResults.hide();
     activeLevelId = null;
     saveButton.hidden = true;
     saveStatus.textContent = "";
