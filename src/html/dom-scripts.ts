@@ -12,9 +12,7 @@ const levelsBtn = document.getElementById("levels-btn") as HTMLButtonElement;
 const miniGameBtn = document.getElementById(
     "mini-game-btn",
 ) as HTMLButtonElement;
-const settingsBtn = document.getElementById(
-    "settings-btn",
-) as HTMLButtonElement;
+const settingsBtn = document.getElementById("settings-btn") as HTMLButtonElement;
 const levelCreatorBtn = document.getElementById(
     "level-creator-btn",
 ) as HTMLButtonElement;
