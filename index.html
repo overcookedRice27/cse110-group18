@@ -29,6 +29,18 @@
         </div>
     </main>
 
+    <main id="mini-game-menu" class="text-center py-5" hidden>
+    <h1 class="display-1 fw-bold mb-2">Mini Games</h1>
+    <p class="text-body-secondary mb-5">Pick a mini game</p>
+
+    <div class="d-grid gap-4 col-3 mx-auto">
+        <button id="mini-game-1-btn" class="btn btn-primary py-3" type="button">Truth Table Game</button>
+        <button id="mini-game-2-btn" class="btn btn-primary py-3" type="button">Real Life Scenario Game</button>
+    </div>
+
+    <button id="mini-game-back-btn" class="btn btn-outline-secondary mt-5 px-5 py-2" type="button">Back</button>
+    </main>
+
     <main id="level-screen" class="text-center py-5" hidden>
         <h1 class="display-1 text-center fw-bold mb-2">Levels</h1>
         <p class="text-center text-body-secondary mb-5">Choose a level to continue</p>
@@ -98,6 +110,24 @@
         </div>
     </div>
 
+    <main id="scenario-screen" class="text-center py-5" hidden>
+    <h1 class="display-4 fw-bold mb-2">Fill in the Gate</h1>
+    <p id="scenario-progress" class="text-body-secondary mb-4"></p>
+
+    <p class="fs-4 mb-4">
+        <span id="scenario-before"></span>
+        <span id="scenario-blank" class="d-inline-block border border-2 border-primary rounded px-4 mx-2">?</span>
+        <span id="scenario-after"></span>
+    </p>
+
+    <div id="scenario-choices" class="d-flex justify-content-center gap-3 mb-4"></div>
+
+    <button id="scenario-submit-btn" class="btn btn-primary px-5 py-2" type="button">Submit</button>
+    <button id="scenario-next-btn" class="btn btn-success px-5 py-2 ms-2" type="button" hidden>Next</button>
+    <p id="scenario-feedback" class="mt-3" role="status" aria-live="polite"></p>
+
+    <button id="scenario-back-btn" class="btn btn-outline-secondary mt-4 px-5 py-2" type="button">Back</button>
+    </main>
 
     <main id="game-view" hidden>
         <header class="border-bottom p-3">
