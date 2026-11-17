@@ -71,7 +71,7 @@ describe("main menu buttons go to the right place", () => {
     it("starts on the main menu only", async () => {
         await loadMenu();
         expect(visibleScreens()).toEqual(["main-menu"]);
-    })};
+    });
 
     it("Continue opens the saved level in the game screen", async () => {
         localStorage.setItem("logicGame.save", VALID_SAVE);
@@ -138,8 +138,7 @@ describe("main menu buttons go to the right place", () => {
         expect(visibleScreens()).toEqual(["main-menu"]);
     });
 
-    it("Mini Games shows its message and stays on the menu", async () => {
-      it("Mini Games opens the mini game menu", async () => {
+    it("Mini Games opens the mini game menu", async () => {
         await loadMenu();
         el("mini-game-btn").click();
         expect(visibleScreens()).toEqual(["mini-game-menu"]);
