@@ -7,7 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // and board loading with exit fixtures; circuit solving is tested elsewhere.
 vi.mock("konva", async (importOriginal) => {
     const { default: actual } = await importOriginal<typeof import("konva")>();
-    return { default: { ...actual, Stage: actual.Group, Layer: actual.Group } };
+    return { default: { ...actual, Stage: actual.Group, Layer: actual.Group, Rect: actual.Group, Text: actual.Group } };
+});
+// Observe the actual popup instance to verify validation opens it only on success.
+vi.mock("../src/konva/level-results", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("../src/konva/level-results")>();
+    return { ...actual, createLevelResults: vi.fn(actual.createLevelResults) };
 });
 vi.mock("../src/konva/grid", () => ({ drawGridLayer: () => new Konva.Group() }));
 vi.mock("../src/konva/button", () => ({ createButton: () => new Konva.Group() }));
@@ -44,6 +49,8 @@ describe("player completion persistence", () => {
     it.each([false, true])("does not save failed validation (existing save: %s)", async (existingSave) => {
         const { showPlayerLevel } = await import("../src/konva/main");
         const { loadLevel } = await import("../src/konva/levels/loadLevel");
+        const { createLevelResults } = await import("../src/konva/level-results");
+        const results = vi.mocked(createLevelResults).mock.results.at(-1)!.value as Konva.Layer;
         const { getHighestCompleted, restoreProgress } = await import("../src/html/levels");
         const { saveLevel } = await import("../src/konva/save");
         // Seed completed progress only for the existing-save case, leaving Level 2 unlocked.
@@ -52,12 +59,16 @@ describe("player completion persistence", () => {
             saveLevel({ id: 1, pieces: [] }, 1);
         }
         // Retain the exact saved text (or null) to detect overwrites or new saves.
+        const { getLevelMetadata } = await import("../src/levels/level-metadata");
+        const levelId = existingSave ? 2 : 1;
         const previousSave = localStorage.getItem("logicGame.save");
         // Override only this board so the real validation handler sees a failed circuit.
         vi.mocked(loadLevel).mockImplementationOnce((grid) => {
             grid.add(new Konva.Group({ elementType: "exit", powered: false }));
         });
-        await showPlayerLevel({ id: existingSave ? 2 : 1, pieces: [] });
+        await showPlayerLevel({ id: levelId, pieces: [] });
+        // Entering through the shared loader starts tracking; failed validation ends it.
+        expect(getLevelMetadata(levelId).isTracking).toBe(true);
         // Observe writes after setup so seeding the older save does not count.
         const write = vi.spyOn(Storage.prototype, "setItem");
         // Click the real Validate control rather than calling a test-only handler.
@@ -66,6 +77,10 @@ describe("player completion persistence", () => {
         // Confirm validation actually failed, then verify it neither wrote storage
         // nor replaced the older board nor advanced completion in this session.
         expect(document.getElementById("circuit-status")!.textContent).toContain("Level Failed");
+        expect(getLevelMetadata(levelId).isTracking).toBe(false);
+        expect(getLevelMetadata(levelId).incorrectValidations).toBe(1);
+        expect(getLevelMetadata(levelId).correctValidations).toBe(0);
+        expect(results.visible()).toBe(false);
         expect(write).not.toHaveBeenCalled();
         expect(localStorage.getItem("logicGame.save")).toBe(previousSave);
         expect(getHighestCompleted()).toBe(existingSave ? 1 : 0);
@@ -78,10 +93,25 @@ describe("player completion persistence", () => {
         const { showPlayerLevel } = await import("../src/konva/main");
         const { getHighestCompleted, resetLevels, restoreProgress } = await import("../src/html/levels");
         const { loadSavedLevel } = await import("../src/konva/save");
+        const { createLevelResults } = await import("../src/konva/level-results");
+        const results = vi.mocked(createLevelResults).mock.results.at(-1)!.value as Konva.Layer;
+        const { getLevelMetadata } = await import("../src/levels/level-metadata");
         // Completing the first level must unlock the second and allow it to finish.
         for (const id of [1, 2]) {
             await showPlayerLevel({ id, pieces: [] });
+            // Opening a level dismisses any earlier result; success opens it again.
+            expect(results.visible()).toBe(false);
+            expect(getLevelMetadata(id).isTracking).toBe(true);
             document.getElementById("validate-circuit-btn")!.click();
+            // Successful validation records a correct attempt and stops timing, too.
+            expect(getLevelMetadata(id).isTracking).toBe(false);
+            expect(getLevelMetadata(id).correctValidations).toBe(1);
+            expect(results.visible()).toBe(true);
+            // The validation event passes the active level's stopped metadata to the popup.
+            const metadata = getLevelMetadata(id);
+            expect(results.findOne(".resultsSummary")!.getAttr("text")).toBe(
+                `Time to clear: ${(metadata.timeSpentMs / 1000).toFixed(1)} s\nIncorrect validations: ${metadata.incorrectValidations}`,
+            );
             expect(getHighestCompleted()).toBe(id);
             expect(loadSavedLevel()).toMatchObject({ highestCompleted: id, level: { id } });
         }
