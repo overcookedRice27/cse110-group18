@@ -34,3 +34,28 @@ body {
     opacity: 0.65;
     cursor: not-allowed;
 }
+
+.tt-cell {
+    height: 4rem;
+    vertical-align: middle;
+}
+
+.tt-cell--given {
+    background-color: var(--bs-secondary-bg);
+}
+
+#tt-table-body th {
+    vertical-align: middle;
+}
+
+#truth-table-screen .table {
+    --bs-table-border-color: black;
+}
+
+#tt-feedback:empty {
+    visibility: hidden;
+}
+
+.tt-token {
+    cursor: grab;
+}
