@@ -15,6 +15,7 @@ import { completeLevel, getHighestCompleted } from "../html/levels";
 import { loadSavedLevel, saveLevel } from "./save";
 import { checkCircuit } from "./wire";
 import { useSpecialAbility, getCharge, increaseCharge, setCharge } from "./specialAbility";
+import { getCircuitHint } from "./circuitHints";
 import { getLevel } from "../levels/registry";
 import { signalLevelMetadata, getLevelMetadata } from "../levels/level-metadata";
 
@@ -145,7 +146,12 @@ validateButton.addEventListener("click", () => {
         return;
     }
 
-    circuitStatus.textContent = result.message;
+    const inputs = grid.find((n: Konva.Node) => n.getAttr("elementType") === "input");
+    const hint = result.passed ? "" : getCircuitHint({
+        exitCount: exits.length,
+        inputsOnCount: inputs.filter((i) => i.getAttr("powerSource") === true).length,
+    });
+    circuitStatus.textContent = hint ? `${result.message} Hint: ${hint}` : result.message;
     circuitStatus.style.color = result.passed ? "green" : "red";
 
     // Both successful and failed player validations end the current timed interval.
