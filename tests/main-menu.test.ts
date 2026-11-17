@@ -71,7 +71,7 @@ describe("main menu buttons go to the right place", () => {
     it("starts on the main menu only", async () => {
         await loadMenu();
         expect(visibleScreens()).toEqual(["main-menu"]);
-    });
+    })};
 
     it("Continue opens the saved level in the game screen", async () => {
         localStorage.setItem("logicGame.save", VALID_SAVE);
