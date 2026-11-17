@@ -1,8 +1,8 @@
 import Konva from "konva";
 import { circuitGrid } from "../utils/circuitGrid";
-import type { GateType, LevelData, LevelPiece } from "./levelData";
+import type { GateRequirements, GateType, LevelData, LevelPiece } from "./levelData";
 
-export function getLevelData(id: number): LevelData {
+export function getLevelData(id: number, requiredGates?: GateRequirements): LevelData {
     const pieces: LevelPiece[] = [];
     // A gate appears in every cell it occupies, but is exported only once.
     const visited = new Set<Konva.Group>();
@@ -39,11 +39,12 @@ export function getLevelData(id: number): LevelData {
         }
     }
 
+    if (requiredGates !== undefined) return { id, pieces, requiredGates };
     return { id, pieces };
 }
 
-export function exportLevel(id: number): void {
-    const level = getLevelData(id);
+export function exportLevel(id: number, requiredGates?: GateRequirements): void {
+    const level = getLevelData(id, requiredGates);
     const json = JSON.stringify(level, null, 4);
     const file = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(file);

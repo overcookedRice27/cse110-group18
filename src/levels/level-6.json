@@ -1,5 +1,6 @@
 {
     "id": 6,
+    "requiredGates": { "XOR": 1, "AND": 1 },
     "pieces": [
         {
             "type": "block",

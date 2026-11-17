@@ -1,5 +1,6 @@
 {
     "id": 7,
+    "requiredGates": { "AND": 1, "OR": 1, "XOR": 1 },
     "pieces": [
         {
             "type": "high",

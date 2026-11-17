@@ -28,6 +28,7 @@ npm run build
 - **Level creator:** Build a layout with inputs, exits, wires, gates, and blocked cells. Mark gates and wires as fixed, try the layout in player view, and import or export JSON files.
 - **Player levels and saving:** The menu can open a level, select available levels, and save or resume a player's board and progress using local storage. The current level layouts are sample data.
 - **Circuit check:** The game provides feedback based on whether the exits are powered and can mark an active level complete.
+- **Reset layout:** In a player level, reset the board to its original layout. Select Save afterward to keep the reset layout in the existing save.
 - **Truth-table mini-game logic:** Functions for rounds, gate answers, and feedback are implemented and tested; the mini-game menu is not connected to a playable screen yet.
 
 ## Codebase structure
@@ -48,6 +49,7 @@ The in-memory grid stores references to Konva pieces while the game runs. Level 
 ## Level and save data
 
 - **Level JSON** contains a level ID and a list of pieces. Each piece has a type and grid coordinates. Gates also have a gate type, gates and wires can be marked fixed, and inputs store whether they start on or off. Exits and blocks need only their type and position. Coordinates refer to grid cells, not pixels.
+- A level may include `"requiredGates": { "AND": 2, "NOT": 1 }`. Checking the circuit requires at least that many distinct gates of each type connected upstream of an exit, in addition to powering all exits. Levels without this field keep the existing check. The check traces connectivity, so a gate on an alternate branch may count even when it is not needed to power the exit.
 - **Player saves** are stored in the browser's local storage under `logicGame.save`. A save contains a format version, the highest completed level, and the player's current level layout in the same format used by level JSON. Player saves are separate from the files exported by the level creator.
 
 ## Level creator
@@ -59,6 +61,7 @@ Open **Level Creator** from the main menu to design a board.
 - Drag pieces from the panel onto the grid. Drag a placed piece back to the panel to remove it.
 - Click a placed gate or wire to mark it fixed. Fixed pieces stay in place in player view.
 - Click an input to switch it on or off. An exit shows whether an adjacent wire is powered.
+- Open **Gate Requirements** to set a minimum count for each gate type. Zero means the type is optional. Requirements are saved in exported JSON and restored when importing a level.
 - Use **Player View** to test the level. Returning to **Creator View** restores the layout from before the test.
 - Use **Export Level** to download the layout as JSON. Use **Import Level** to open a previously exported file.
 - **Clear Board** removes all pieces after confirmation.

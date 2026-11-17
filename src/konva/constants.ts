@@ -1,4 +1,4 @@
-const STAGE_WIDTH = 1000;
+const STAGE_WIDTH = 900;
 const STAGE_HEIGHT = 600;
 
 // Controls whether the developer-facing creator is available from the menu.

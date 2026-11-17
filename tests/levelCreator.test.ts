@@ -76,6 +76,16 @@ describe("level loading and export", () => {
         expect(circuitGrid[0][2]?.getAttr("elementType")).toBe("input");
     });
 
+    it("preserves required gates when importing and exporting a layout", async () => {
+        const level: LevelData = {
+            id: 2,
+            pieces: [{ type: "exit", x: 2, y: 0 }],
+            requiredGates: { AND: 2, NOT: 1 },
+        };
+        const imported = await importLevel(makeLayer(), makeFile(level));
+        expect(getLevelData(imported.id, imported.requiredGates)).toEqual(level);
+    });
+
     it("downloads the exported level as JSON with the level ID in its filename", async () => {
         const link = { href: "", download: "", click: vi.fn() };
         const createUrl = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
@@ -103,6 +113,11 @@ describe("level import validation", () => {
         ["zero id", { id: 0, pieces: [] }, "Invalid level data"],
         ["fractional id", { id: 1.5, pieces: [] }, "Invalid level data"],
         ["missing pieces", { id: 1 }, "Invalid level data"],
+        ["unknown required gate", { id: 1, pieces: [], requiredGates: { NAND: 1 } }, "Invalid required gates"],
+        ["invalid required gates", { id: 1, pieces: [], requiredGates: "AND" }, "Invalid required gates"],
+        ["negative gate count", { id: 1, pieces: [], requiredGates: { AND: -1 } }, "Invalid required gates"],
+        ["fractional gate count", { id: 1, pieces: [], requiredGates: { OR: 1.5 } }, "Invalid required gates"],
+        ["array of gate types", { id: 1, pieces: [], requiredGates: ["AND"] }, "Invalid required gates"],
         ["unknown piece", { id: 1, pieces: [{ type: "other", x: 0, y: 0 }] }, "Invalid level piece"],
         ["fractional coordinate", { id: 1, pieces: [{ type: "wire", x: 0.5, y: 0 }] }, "Invalid level piece"],
         ["bad gate type", { id: 1, pieces: [{ type: "gate", gateType: "NAND", x: 0, y: 0 }] }, "Invalid gate type"],
