@@ -1,5 +1,6 @@
 {
     "id": 10,
+    "requiredGates": { "AND": 2 },
     "pieces": [
         {
             "type": "input",

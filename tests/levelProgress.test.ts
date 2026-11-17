@@ -10,7 +10,7 @@ vi.mock("konva", async (importOriginal) => {
     return { default: { ...actual, Stage: actual.Group, Layer: actual.Group } };
 });
 vi.mock("../src/konva/grid", () => ({ drawGridLayer: () => new Konva.Group() }));
-vi.mock("../src/konva/button", () => ({ createButton: () => new Konva.Group() }));
+vi.mock("../src/konva/button", () => ({ createButton: vi.fn(() => new Konva.Group()) }));
 vi.mock("../src/konva/levels/creatorPanel", () => ({ createCreatorPanel: () => new Konva.Group() }));
 vi.mock("../src/konva/levels/loadLevel", () => ({
     // A powered exit represents a correctly solved board for validation.
@@ -20,7 +20,7 @@ vi.mock("../src/konva/levels/loadLevel", () => ({
 vi.mock("../src/konva/levels/importLevel", () => ({ importLevel: vi.fn() }));
 vi.mock("../src/konva/levels/exportLevel", () => ({
     // Supply a minimal board snapshot while preserving the active level's ID.
-    getLevelData: (id: number) => ({ id, pieces: [] }),
+    getLevelData: (id: number, requiredGates?: Record<string, number>) => ({ id, pieces: [], requiredGates }),
     exportLevel: vi.fn(),
 }));
 
@@ -30,14 +30,140 @@ beforeEach(() => {
     vi.resetModules();
     localStorage.clear();
     document.body.innerHTML = [
-        "level-save-btn", "validate-circuit-btn", "view-toggle-btn",
+        "level-save-btn", "reset-level-btn", "validate-circuit-btn", "view-toggle-btn", "game-back-btn",
     ].map((id) => `<button id="${id}"></button>`).join("") +
-        '<span id="level-save-status"></span><span id="circuit-status"></span>';
+        '<span id="level-save-status"></span><span id="circuit-status"></span>' +
+        '<section id="player-gate-requirements" hidden><p id="player-gate-requirements-list"></p></section>' +
+        '<details id="gate-requirements-menu"><span id="gate-requirements-error"></span>' +
+        ["and", "or", "not", "xor"].map((name) => `<input id="require-${name}" type="number" value="0">`).join("") + '</details>';
 });
 // Restore storage spies so a simulated failure cannot affect another test.
 afterEach(() => vi.restoreAllMocks());
 
 describe("player completion persistence", () => {
+    it("shows the current level requirements before validation and clears them for other levels", async () => {
+        const { showPlayerLevel, showLevelCreator } = await import("../src/konva/main");
+        const panel = document.getElementById("player-gate-requirements")!;
+        const list = document.getElementById("player-gate-requirements-list")!;
+        await showPlayerLevel({ id: 4, pieces: [] });
+        expect(panel.hidden).toBe(false);
+        expect(list.textContent).toBe("AND: 1");
+
+        await showPlayerLevel({ id: 1, pieces: [] });
+        expect(list.textContent).toBe("No gates required.");
+        showLevelCreator();
+        expect(panel.hidden).toBe(true);
+    });
+    it("resets the current board to its original layout without overwriting saved progress", async () => {
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const { loadLevel } = await import("../src/konva/levels/loadLevel");
+        const { circuitGrid, placeElement } = await import("../src/konva/utils/circuitGrid");
+        const { getLevel } = await import("../src/levels/registry");
+        const { saveLevel } = await import("../src/konva/save");
+        const { restoreProgress, getHighestCompleted } = await import("../src/html/levels");
+        vi.spyOn(window, "confirm").mockReturnValue(true);
+        restoreProgress(1);
+        saveLevel({ id: 1, pieces: [] }, 1);
+        const previousSave = localStorage.getItem("logicGame.save");
+        await showPlayerLevel({ id: 2, pieces: [] });
+        const extraPiece = new Konva.Group();
+        placeElement(extraPiece, 0, 0, 1, 1);
+        document.getElementById("circuit-status")!.textContent = "Old result";
+
+        document.getElementById("reset-level-btn")!.click();
+
+        expect(circuitGrid[0][0]).toBeNull();
+        expect(loadLevel).toHaveBeenLastCalledWith(expect.anything(), getLevel(2));
+        expect(getHighestCompleted()).toBe(1);
+        expect(localStorage.getItem("logicGame.save")).toBe(previousSave);
+        expect(document.getElementById("circuit-status")!.textContent).toBe("");
+        expect(document.getElementById("level-save-status")!.textContent).toContain("Select Save");
+    });
+
+    it("keeps the board when the player cancels reset", async () => {
+        const { showPlayerLevel, showLevelCreator } = await import("../src/konva/main");
+        const { loadLevel } = await import("../src/konva/levels/loadLevel");
+        const { circuitGrid, placeElement } = await import("../src/konva/utils/circuitGrid");
+        vi.spyOn(window, "confirm").mockReturnValue(false);
+        await showPlayerLevel({ id: 1, pieces: [] });
+        const piece = new Konva.Group();
+        placeElement(piece, 0, 0, 1, 1);
+        vi.mocked(loadLevel).mockClear();
+        document.getElementById("reset-level-btn")!.click();
+        expect(circuitGrid[0][0]).toBe(piece);
+        expect(loadLevel).not.toHaveBeenCalled();
+        showLevelCreator();
+        expect(document.getElementById("reset-level-btn")!.hidden).toBe(true);
+    });
+    it("clears validation feedback when leaving and opening levels", async () => {
+        const { showPlayerLevel, showLevelCreator } = await import("../src/konva/main");
+        const status = document.getElementById("circuit-status")!;
+        await showPlayerLevel({ id: 1, pieces: [] });
+        document.getElementById("validate-circuit-btn")!.click();
+        expect(status.textContent).not.toBe("");
+        document.getElementById("game-back-btn")!.click();
+        expect(status.textContent).toBe("");
+        expect(status.style.color).toBe("");
+
+        status.textContent = "Old level result";
+        await showPlayerLevel({ id: 2, pieces: [] });
+        expect(status.textContent).toBe("");
+
+        status.textContent = "Old level result";
+        showLevelCreator();
+        expect(status.textContent).toBe("");
+    });
+    it("does not complete or save when a required gate is missing", async () => {
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const requirements = await import("../src/konva/levels/checkRequiredGates");
+        const check = vi.spyOn(requirements, "missingRequiredGates").mockReturnValue(["AND (1/2)"]);
+        const { getHighestCompleted } = await import("../src/html/levels");
+        await showPlayerLevel({ id: 1, pieces: [], requiredGates: { AND: 2 } });
+        document.getElementById("validate-circuit-btn")!.click();
+        expect(check).toHaveBeenCalledWith({ AND: 2 });
+        expect(document.getElementById("circuit-status")!.textContent).toContain("AND");
+        expect(getHighestCompleted()).toBe(0);
+        expect(localStorage.getItem("logicGame.save")).toBeNull();
+    });
+
+    it("reports missing gates even when the exit is not powered", async () => {
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const { loadLevel } = await import("../src/konva/levels/loadLevel");
+        const requirements = await import("../src/konva/levels/checkRequiredGates");
+        vi.spyOn(requirements, "missingRequiredGates").mockReturnValue(["AND (1/2)"]);
+        vi.mocked(loadLevel).mockImplementationOnce((grid) => {
+            grid.add(new Konva.Group({ elementType: "exit", powered: false }));
+        });
+        await showPlayerLevel({ id: 1, pieces: [], requiredGates: { AND: 2 } });
+        document.getElementById("validate-circuit-btn")!.click();
+        const message = document.getElementById("circuit-status")!.textContent;
+        expect(message).toContain("Level Failed");
+        expect(message).toContain("AND (1/2)");
+        expect(localStorage.getItem("logicGame.save")).toBeNull();
+    });
+
+    it("uses the current level requirements when an older save has none", async () => {
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const requirements = await import("../src/konva/levels/checkRequiredGates");
+        const check = vi.spyOn(requirements, "missingRequiredGates").mockReturnValue(["NOT (0/1)"]);
+        await showPlayerLevel({ id: 3, pieces: [] });
+        document.getElementById("validate-circuit-btn")!.click();
+        expect(check).toHaveBeenCalledWith({ NOT: 1 });
+        expect(document.getElementById("circuit-status")!.textContent).toContain("NOT");
+    });
+
+    it("completes and preserves requirements in the save when the check passes", async () => {
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const requirements = await import("../src/konva/levels/checkRequiredGates");
+        vi.spyOn(requirements, "missingRequiredGates").mockReturnValue([]);
+        const { getHighestCompleted } = await import("../src/html/levels");
+        await showPlayerLevel({ id: 1, pieces: [], requiredGates: { AND: 2 } });
+        document.getElementById("validate-circuit-btn")!.click();
+        expect(getHighestCompleted()).toBe(1);
+        expect(JSON.parse(localStorage.getItem("logicGame.save")!)).toMatchObject({
+            level: { id: 1, requiredGates: { AND: 2 } },
+        });
+    });
     // An unpowered exit must fail validation without writing to storage or marking
     // the level complete. Check both a fresh game and preservation of an older save.
     // false: fail Level 1 with no save; true: fail Level 2 after saving Level 1.
@@ -103,5 +229,66 @@ describe("player completion persistence", () => {
         document.getElementById("validate-circuit-btn")!.click();
         expect(getHighestCompleted()).toBe(1);
         expect(document.getElementById("level-save-status")!.textContent).toContain("could not be saved");
+    });
+});
+
+describe("creator gate requirements", () => {
+    it("keeps counts through player preview and exports them", async () => {
+        const { showLevelCreator } = await import("../src/konva/main");
+        const { createButton } = await import("../src/konva/button");
+        const { exportLevel } = await import("../src/konva/levels/exportLevel");
+        vi.spyOn(window, "prompt").mockReturnValue("4");
+        showLevelCreator();
+        const menu = document.getElementById("gate-requirements-menu")!;
+        const and = document.getElementById("require-and") as HTMLInputElement;
+        const not = document.getElementById("require-not") as HTMLInputElement;
+        expect(menu.hidden).toBe(false);
+        and.value = "2";
+        not.value = "1";
+        const status = document.getElementById("circuit-status")!;
+        status.textContent = "Old creator result";
+        document.getElementById("view-toggle-btn")!.click();
+        expect(status.textContent).toBe("");
+        expect(menu.hidden).toBe(true);
+        expect(document.getElementById("player-gate-requirements")!.hidden).toBe(false);
+        expect(document.getElementById("player-gate-requirements-list")!.textContent).toBe("AND: 2, NOT: 1");
+        status.textContent = "Old preview result";
+        document.getElementById("view-toggle-btn")!.click();
+        expect(status.textContent).toBe("");
+        expect(menu.hidden).toBe(false);
+        expect(document.getElementById("player-gate-requirements")!.hidden).toBe(true);
+        expect(and.value).toBe("2");
+        expect(not.value).toBe("1");
+        const exportButton = vi.mocked(createButton).mock.results[0].value;
+        exportButton.fire("click");
+        expect(exportLevel).toHaveBeenCalledWith(4, { AND: 2, NOT: 1 });
+    });
+
+    it("rejects invalid counts before switching to preview", async () => {
+        const { showLevelCreator } = await import("../src/konva/main");
+        showLevelCreator();
+        const and = document.getElementById("require-and") as HTMLInputElement;
+        and.value = "-1";
+        document.getElementById("view-toggle-btn")!.click();
+        expect(document.getElementById("gate-requirements-menu")!.hidden).toBe(false);
+        expect(document.getElementById("gate-requirements-error")!.textContent).toContain("whole number");
+    });
+
+    it("shows imported counts in the creator menu", async () => {
+        const createElement = vi.spyOn(document, "createElement");
+        vi.spyOn(window, "confirm").mockReturnValue(true);
+        const { showLevelCreator } = await import("../src/konva/main");
+        const { importLevel } = await import("../src/konva/levels/importLevel");
+        vi.mocked(importLevel).mockResolvedValue({ id: 4, pieces: [], requiredGates: { AND: 2, XOR: 1 } });
+        showLevelCreator();
+        const fileInput = createElement.mock.results
+            .map((result) => result.value)
+            .find((element) => element instanceof HTMLInputElement && element.type === "file") as HTMLInputElement;
+        Object.defineProperty(fileInput, "files", { value: [new File(["{}"], "level.json")] });
+        fileInput.dispatchEvent(new Event("change"));
+        await vi.waitFor(() => {
+            expect((document.getElementById("require-and") as HTMLInputElement).value).toBe("2");
+            expect((document.getElementById("require-xor") as HTMLInputElement).value).toBe("1");
+        });
     });
 });

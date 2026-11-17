@@ -79,19 +79,32 @@
                 View</button>
         </header>
 
-        <div class="text-center mt-3">
-            <button id="validate-circuit-btn"
-                    class="btn btn-primary px-4 py-2"
-                    type="button">
-                Validate Circuit
-            </button>
-
-            <p id="circuit-status"
-            class="mt-2"
-            role="status"
-            aria-live="polite"></p>
+        <div class="game-workspace-scroll">
+            <div class="game-workspace">
+                <div id="game-screen"></div>
+                <aside class="game-sidebar mt-3" aria-label="Circuit controls">
+                    <button id="validate-circuit-btn" class="btn btn-primary w-100" type="button">Validate Circuit</button>
+                    <button id="reset-level-btn" class="btn btn-outline-secondary w-100" type="button" hidden>Reset Layout</button>
+                    <p id="circuit-status" class="mb-0" role="status" aria-live="polite"></p>
+                    <section id="player-gate-requirements" class="border rounded p-3" aria-labelledby="player-gate-requirements-title" hidden>
+                        <h2 id="player-gate-requirements-title" class="h6">Gate Requirements</h2>
+                        <p class="small mb-2">Use these gates in your circuit:</p>
+                        <p id="player-gate-requirements-list" class="mb-0"></p>
+                    </section>
+                    <details id="gate-requirements-menu" class="gate-requirements border rounded p-3" open hidden>
+                        <summary>Gate Requirements</summary>
+                        <p class="mt-2 mb-3">Minimum number of each gate connected to an exit (0 means none).</p>
+                        <div class="gate-requirements-fields">
+                            <label>AND <input id="require-and" type="number" min="0" step="1" value="0"></label>
+                            <label>OR <input id="require-or" type="number" min="0" step="1" value="0"></label>
+                            <label>NOT <input id="require-not" type="number" min="0" step="1" value="0"></label>
+                            <label>XOR <input id="require-xor" type="number" min="0" step="1" value="0"></label>
+                        </div>
+                        <p id="gate-requirements-error" class="text-danger mb-0" role="status" aria-live="polite"></p>
+                    </details>
+                </aside>
+            </div>
         </div>
-        <div id="game-screen"></div>
     </main>
 
     <script type="module" defer src="src/html/dom-scripts.ts"></script>

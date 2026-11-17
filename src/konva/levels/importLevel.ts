@@ -21,6 +21,18 @@ export async function importLevel(
         throw new Error("Invalid level data");
     }
 
+    if (
+        level.requiredGates !== undefined &&
+        (typeof level.requiredGates !== "object" || level.requiredGates === null ||
+            Array.isArray(level.requiredGates) ||
+            !Object.entries(level.requiredGates).every(([type, count]) =>
+                ["AND", "OR", "NOT", "XOR"].includes(type) &&
+                Number.isSafeInteger(count) && (count as number) >= 0,
+            ))
+    ) {
+        throw new Error("Invalid required gates");
+    }
+
     // Check the entire layout before replacing the current board.
     for (const piece of level.pieces) {
         if (
