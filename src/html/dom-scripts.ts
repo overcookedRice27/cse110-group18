@@ -1,4 +1,4 @@
-
+import { initTruthTableGame } from "./truth-table-mini-game/truth-table-game";
 import { getLevel, LEVEL_COUNT } from "../levels/registry";
 import { renderLevelGrid, resetLevels, restoreProgress, getHighestCompleted } from "./levels";
 import { hasProgress, hasLocalSave, loadSavedLevel, clearLocalSave } from "../konva/save";
@@ -141,8 +141,18 @@ gameBackBtn.addEventListener("click", () => {
 
 miniGameBtn.addEventListener("click", showMiniGameMenu);
 
-// Placeholders until the real truth table game is connected
-miniGame1Btn.addEventListener("click", () => alert("Mini Game 1 coming soon!"));
+// Created on first click so the main menu and its tests never touch the game's elements.
+let truthTableGame: { open: () => void } | null = null;
+
+function openTruthTable(): void {
+    if (truthTableGame === null) {
+        truthTableGame = initTruthTableGame(showMiniGameMenu);
+    }
+    miniGameMenu.hidden = true;
+    truthTableGame.open();
+}
+
+miniGame1Btn.addEventListener("click", openTruthTable);
 
 // Scenario mini game is loaded only when its button is clicked,
 // so the main wire game (and its tests) never touch it.

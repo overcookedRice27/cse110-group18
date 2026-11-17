@@ -1,5 +1,6 @@
 {
     "id": 8,
+    "requiredGates": { "NOT": 1, "XOR": 2 },
     "pieces": [
         {
             "type": "gate",

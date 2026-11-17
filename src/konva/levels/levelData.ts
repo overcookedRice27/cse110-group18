@@ -1,4 +1,5 @@
 export type GateType = "AND" | "OR" | "NOT" | "XOR";
+export type GateRequirements = Partial<Record<GateType, number>>;
 
 // Coordinates are grid cells, not pixels. Gates occupy more than one cell.
 export type LevelPiece =
@@ -21,4 +22,6 @@ export type LevelPiece =
 export type LevelData = {
     id: number;
     pieces: LevelPiece[];
+    // Minimum number of each gate type connected upstream of an exit.
+    requiredGates?: GateRequirements;
 };

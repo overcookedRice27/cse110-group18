@@ -7,12 +7,15 @@ import { exportLevel, getLevelData } from "./levels/exportLevel";
 import { importLevel } from "./levels/importLevel";
 import { createCreatorPanel } from "./levels/creatorPanel";
 import { loadLevel } from "./levels/loadLevel";
-import type { LevelData } from "./levels/levelData";
+import type { GateRequirements, LevelData } from "./levels/levelData";
+import { missingRequiredGates } from "./levels/checkRequiredGates";
+import { readRequirements, showRequirements } from "./levels/requirementsMenu";
 import { circuitGrid, clearGrid } from "./utils/circuitGrid";
 import { completeLevel, getHighestCompleted } from "../html/levels";
 import { loadSavedLevel, saveLevel } from "./save";
 import { checkCircuit } from "./wire";
 import { useSpecialAbility, getCharge, increaseCharge, setCharge } from "./specialAbility";
+import { getLevel } from "../levels/registry";
 import { signalLevelMetadata, getLevelMetadata } from "../levels/level-metadata";
 
 const stage = new Konva.Stage({
@@ -39,8 +42,37 @@ stage.on(LEVEL_RESULTS_EVENTS.EXIT, () => {
 });
 
 let activeLevelId: number | null = null;
+let activeRequiredGates: GateRequirements | undefined;
+let creatorRequiredGates: GateRequirements | undefined;
 const saveButton = document.getElementById("level-save-btn") as HTMLButtonElement;
+const resetButton = document.getElementById("reset-level-btn") as HTMLButtonElement;
 const saveStatus = document.getElementById("level-save-status") as HTMLElement;
+const requirementsMenu = document.getElementById("gate-requirements-menu") as HTMLDetailsElement;
+const requirementsError = document.getElementById("gate-requirements-error") as HTMLElement;
+const playerRequirements = document.getElementById("player-gate-requirements") as HTMLElement;
+const playerRequirementsList = document.getElementById("player-gate-requirements-list") as HTMLElement;
+
+function showPlayerRequirements(requirements?: GateRequirements): void {
+    const items = (["AND", "OR", "NOT", "XOR"] as const)
+        .filter((type) => (requirements?.[type] ?? 0) > 0)
+        .map((type) => `${type}: ${requirements![type]}`);
+    playerRequirementsList.textContent = items.length > 0
+        ? items.join(", ")
+        : "No gates required.";
+    playerRequirements.hidden = false;
+}
+
+function readCreatorRequirements(): boolean {
+    const requirements = readRequirements();
+    if (!requirements) {
+        requirementsError.textContent = "Enter a non-negative whole number for each gate.";
+        requirementsMenu.open = true;
+        return false;
+    }
+    requirementsError.textContent = "";
+    creatorRequiredGates = requirements;
+    return true;
+}
 
 // Save the active player's board; creator layouts continue to use Export Level.
 saveButton.addEventListener("click", () =>
@@ -51,7 +83,7 @@ saveButton.addEventListener("click", () =>
     }
     try
     {
-        saveLevel(getLevelData(activeLevelId), getHighestCompleted(), getCharge());
+        saveLevel(getLevelData(activeLevelId, activeRequiredGates), getHighestCompleted(), getCharge());
         saveStatus.textContent = "Level saved.";
     }
     catch
@@ -70,9 +102,28 @@ const circuitStatus = document.getElementById(
     "circuit-status"
 ) as HTMLElement;
 
+function clearCircuitStatus(): void {
+    circuitStatus.textContent = "";
+    circuitStatus.style.color = "";
+}
+
+document.getElementById("game-back-btn")!.addEventListener("click", clearCircuitStatus);
+
+resetButton.addEventListener("click", () => {
+    if (activeLevelId === null || isCreatorView) return;
+    if (!confirm("Reset this level's layout? Your current board will be cleared.")) return;
+
+    const originalLevel = getLevel(activeLevelId);
+    clearGrid();
+    loadLevel(grid, originalLevel);
+    clearCircuitStatus();
+    saveStatus.textContent = "Layout reset. Select Save to keep it.";
+});
+
 validateButton.addEventListener("click", () => {
     // A visible result already represents this validation; avoid duplicate attempts.
     if (levelResults.visible()) return;
+    if (activeLevelId === null && isCreatorView && !readCreatorRequirements()) return;
     const exits = grid.find(
         (node: Konva.Node) => node.getAttr("elementType") === "exit"
     );
@@ -81,6 +132,18 @@ validateButton.addEventListener("click", () => {
         exits.every((exit) => exit.getAttr("powered") === true);
 
     const result = checkCircuit(powered);
+
+    const requiredGates = activeLevelId === null ? creatorRequiredGates : activeRequiredGates;
+    const missing = missingRequiredGates(requiredGates ?? {});
+    if (missing.length > 0) {
+        if (!isCreatorView && activeLevelId !== null) {
+            signalLevelMetadata({ type: "validated", levelId: activeLevelId, passed: false });
+        }
+        const powerMessage = result.passed ? "" : `${result.message} `;
+        circuitStatus.textContent = `${powerMessage}Connect required gate(s) to an exit: ${missing.join(", ")}.`;
+        circuitStatus.style.color = "red";
+        return;
+    }
 
     circuitStatus.textContent = result.message;
     circuitStatus.style.color = result.passed ? "green" : "red";
@@ -167,7 +230,7 @@ stage.on("levelExitPowered", () =>
         // Persist completion immediately so later levels stay unlocked after reload.
         try
         {
-            saveLevel(getLevelData(activeLevelId), getHighestCompleted(), getCharge());
+            saveLevel(getLevelData(activeLevelId, activeRequiredGates), getHighestCompleted(), getCharge());
             saveStatus.textContent = "Progress saved.";
         }
         catch
@@ -192,11 +255,13 @@ let openCreator: () => void;
 // Load a selected layout into the shared stage in player mode.
 export async function showPlayerLevel(level: LevelData): Promise<void>
 {
+    clearCircuitStatus();
     // End the previous visit before loading; failed loads must not start a new timer.
     signalLevelMetadata({ type: "stop" });
     levelResults.hide();
     activeLevelId = null;
     openPlayer(level);
+    showPlayerRequirements(activeRequiredGates);
     const saved = loadSavedLevel();
     setCharge(saved?.specialAbilityCharge ?? 0);
     updateChargeDisplay();
@@ -211,19 +276,25 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
     // All menu entry points share this loader: level selection, Continue, and New Game.
     signalLevelMetadata({ type: "start", levelId: level.id });
     saveButton.hidden = false;
+    resetButton.hidden = false;
     saveStatus.textContent = "";
 }
 
 // Return the shared stage to its existing creator view and board.
 export function showLevelCreator(): void
 {
+    clearCircuitStatus();
     // Creator previews do not contribute to player metadata.
     signalLevelMetadata({ type: "stop" });
     levelResults.hide();
     activeLevelId = null;
+    activeRequiredGates = undefined;
     saveButton.hidden = true;
+    resetButton.hidden = true;
     saveStatus.textContent = "";
     openCreator();
+    requirementsMenu.hidden = false;
+    playerRequirements.hidden = true;
 }
 
 if (isCreatorView) {
@@ -246,6 +317,7 @@ if (isCreatorView) {
     levelFile.accept = ".json,application/json";
 
     exportButton.on("click", () => {
+        if (!readCreatorRequirements()) return;
         const answer = prompt("Enter the level ID:", String(levelId));
         if (answer === null) return;
         const id = Number(answer);
@@ -254,12 +326,15 @@ if (isCreatorView) {
             return;
         }
         levelId = id;
-        exportLevel(id);
+        exportLevel(id, creatorRequiredGates);
     });
 
     importButton.on("click", () => levelFile.click());
     clearButton.on("click", () => {
-        if (confirm("Clear all pieces from the board?")) clearGrid();
+        if (confirm("Clear all pieces from the board?")) {
+            clearGrid();
+            clearCircuitStatus();
+        }
     });
     levelFile.addEventListener("change", async () => {
         const file = levelFile.files?.[0];
@@ -273,7 +348,11 @@ if (isCreatorView) {
             )
                 return;
             const level = await importLevel(grid, file);
+            clearCircuitStatus();
             levelId = level.id;
+            creatorRequiredGates = level.requiredGates;
+            showRequirements(creatorRequiredGates);
+            requirementsError.textContent = "";
         } catch {
             alert(
                 "Could not import the level. Check that the JSON contains a valid level layout.",
@@ -292,8 +371,10 @@ if (isCreatorView) {
     viewButton.hidden = false;
     viewButton.addEventListener("click", () => {
         if (isCreatorView) {
-            creatorLevel = getLevelData(levelId);
+            if (!readCreatorRequirements()) return;
+            creatorLevel = getLevelData(levelId, creatorRequiredGates);
         }
+        clearCircuitStatus();
         setCreatorView(!isCreatorView);
         if (isCreatorView && creatorLevel) {
             clearGrid();
@@ -303,6 +384,12 @@ if (isCreatorView) {
         controls.visible(isCreatorView);
         creatorPanel.visible(isCreatorView);
         playerPanel.visible(!isCreatorView);
+        requirementsMenu.hidden = !isCreatorView;
+        if (isCreatorView) {
+            playerRequirements.hidden = true;
+        } else {
+            showPlayerRequirements(creatorRequiredGates);
+        }
 
         // Gates occupy several cells, so update each piece only once.
         const pieces = new Set<Konva.Group>();
@@ -333,11 +420,17 @@ if (isCreatorView) {
     {
         if (isCreatorView)
         {
+            // Preserve the last valid requirements if a player level is opened
+            // while a creator field is incomplete.
+            if (!readCreatorRequirements()) showRequirements(creatorRequiredGates);
             viewButton.click();
         }
+        requirementsMenu.hidden = true;
         clearGrid();
         // Set the level before loading because its EXIT may already be powered.
         activeLevelId = level.id;
+        // Use the current level definition even when an older save has no requirements.
+        activeRequiredGates = getLevel(level.id).requiredGates ?? level.requiredGates;
         loadLevel(grid, level);
         viewButton.hidden = true;
     };

@@ -11,17 +11,16 @@ export type TokenCheck =
 export const GATE_TEXT: Record<GateName, { rule: string; explanation: string }> = { 
     AND: {
         rule: "AND is on only when A and B are both on.",
-        explanation: "AND is 1 only when both inputs are 1.",
+        explanation: "Hint: Not quite. Look at this cell's A and B. Are both of them 1?",
     },
     OR: {
         rule: "OR is on when at least one input is 1.",
-        explanation: "OR is 1 only when at least one input is 1, which includes both.",
+        explanation: "Hint: Not quite. Is at least one of this cell's inputs a 1?",
     },
     XOR: {
         rule: "XOR is on only when one input is 1 and the other is 0.",
-        explanation: "XOR is 1 only when one input is 1 and the other is 0 (the inputs are different).",
+        explanation: "Hint: Not quite. Are this cell's two inputs different from each other?",
     },
-    
 };
 
 // gives expected value for given logic gate
