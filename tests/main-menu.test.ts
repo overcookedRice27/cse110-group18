@@ -121,16 +121,41 @@ describe("main menu buttons go to the right place", () => {
         expect(visibleScreens()).toEqual(["game-view"]);
     });
 
-      it("Mini Games opens the mini game menu", async () => {
+    // Result events are handled by the menu and re-render unlocked level buttons.
+    it("Continue from results opens level selection with the next level unlocked", async () => {
+        await loadMenu();
+        const { completeLevel } = await import("../src/html/levels");
+        completeLevel(1);
+        el("game-view").dispatchEvent(new Event("level-results-continue"));
+        expect(visibleScreens()).toEqual(["level-screen"]);
+        expect((el("level-2-btn") as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it("Exit from results returns to the title screen", async () => {
+        await loadMenu();
+        el("levels-btn").click();
+        el("game-view").dispatchEvent(new Event("level-results-exit"));
+        expect(visibleScreens()).toEqual(["main-menu"]);
+    });
+
+    it("Mini Games opens the mini game menu", async () => {
         await loadMenu();
         el("mini-game-btn").click();
         expect(visibleScreens()).toEqual(["mini-game-menu"]);
     });
 
-    it("Settings shows its message and stays on the menu", async () => {
+    it("Settings is wired to the how-to-play Bootstrap modal", async () => {
         await loadMenu();
-        el("settings-btn").click();
-        expect(alertSpy).toHaveBeenCalledWith("Opening settings panel...");
+        const settingsButton = el("settings-btn");
+        const modal = el("how-to-play-modal");
+        const gotItButton = Array.from(
+            modal.querySelectorAll("button"),
+        ).find((button) => button.textContent?.trim() === "Got it");
+
+        expect(settingsButton.getAttribute("data-bs-toggle")).toBe("modal");
+        expect(settingsButton.getAttribute("data-bs-target")).toBe("#how-to-play-modal");
+        expect(modal.classList.contains("modal")).toBe(true);
+        expect(gotItButton?.getAttribute("data-bs-dismiss")).toBe("modal");
         expect(visibleScreens()).toEqual(["main-menu"]);
     });
 

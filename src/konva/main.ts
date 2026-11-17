@@ -1,6 +1,7 @@
 import Konva from "konva";
 import { isCreatorView, setCreatorView, STAGE } from "./constants";
 import { createButton } from "./button";
+import { createLevelResults, LEVEL_RESULTS_EVENTS, type LevelResultSummary } from "./level-results";
 import { drawGridLayer as createGridLayer } from "./grid";
 import { exportLevel, getLevelData } from "./levels/exportLevel";
 import { importLevel } from "./levels/importLevel";
@@ -14,6 +15,7 @@ import { completeLevel, getHighestCompleted } from "../html/levels";
 import { loadSavedLevel, saveLevel } from "./save";
 import { checkCircuit } from "./wire";
 import { getLevel } from "../levels/registry";
+import { signalLevelMetadata, getLevelMetadata } from "../levels/level-metadata";
 
 const stage = new Konva.Stage({
     container: "game-screen",
@@ -27,6 +29,16 @@ grid.x(180);
 grid.y(50);
 
 stage.add(grid);
+const levelResults = createLevelResults();
+stage.add(levelResults);
+
+// Relay Konva button events to the HTML menu, which owns screen transitions.
+stage.on(LEVEL_RESULTS_EVENTS.CONTINUE, () => {
+    document.getElementById("game-view")?.dispatchEvent(new Event("level-results-continue"));
+});
+stage.on(LEVEL_RESULTS_EVENTS.EXIT, () => {
+    document.getElementById("game-view")?.dispatchEvent(new Event("level-results-exit"));
+});
 
 let activeLevelId: number | null = null;
 let activeRequiredGates: GateRequirements | undefined;
@@ -108,6 +120,8 @@ resetButton.addEventListener("click", () => {
 });
 
 validateButton.addEventListener("click", () => {
+    // A visible result already represents this validation; avoid duplicate attempts.
+    if (levelResults.visible()) return;
     if (activeLevelId === null && isCreatorView && !readCreatorRequirements()) return;
     const exits = grid.find(
         (node: Konva.Node) => node.getAttr("elementType") === "exit"
@@ -121,6 +135,9 @@ validateButton.addEventListener("click", () => {
     const requiredGates = activeLevelId === null ? creatorRequiredGates : activeRequiredGates;
     const missing = missingRequiredGates(requiredGates ?? {});
     if (missing.length > 0) {
+        if (!isCreatorView && activeLevelId !== null) {
+            signalLevelMetadata({ type: "validated", levelId: activeLevelId, passed: false });
+        }
         const powerMessage = result.passed ? "" : `${result.message} `;
         circuitStatus.textContent = `${powerMessage}Connect required gate(s) to an exit: ${missing.join(", ")}.`;
         circuitStatus.style.color = "red";
@@ -129,6 +146,11 @@ validateButton.addEventListener("click", () => {
 
     circuitStatus.textContent = result.message;
     circuitStatus.style.color = result.passed ? "green" : "red";
+
+    // Both successful and failed player validations end the current timed interval.
+    if (!isCreatorView && activeLevelId !== null) {
+        signalLevelMetadata({ type: "validated", levelId: activeLevelId, passed: result.passed });
+    }
 
     if (result.passed) {
         stage.fire("levelExitPowered");
@@ -151,6 +173,15 @@ stage.on("levelExitPowered", () =>
         {
             saveStatus.textContent = "Level completed, but progress could not be saved. Try Save again.";
         }
+        // Validation has stopped the timer; capture this level's time and failure count
+        
+        // for the result subtext without changing its recorded metadata.
+        const metadata = getLevelMetadata(activeLevelId);
+        const summary: LevelResultSummary = {
+            timeSpentMs: metadata.timeSpentMs,
+            incorrectValidations: metadata.incorrectValidations,
+        };
+        levelResults.fire(LEVEL_RESULTS_EVENTS.CLEARED, { summary });
     }
 });
 
@@ -161,6 +192,9 @@ let openCreator: () => void;
 export async function showPlayerLevel(level: LevelData): Promise<void>
 {
     clearCircuitStatus();
+    // End the previous visit before loading; failed loads must not start a new timer.
+    signalLevelMetadata({ type: "stop" });
+    levelResults.hide();
     activeLevelId = null;
     openPlayer(level);
     showPlayerRequirements(activeRequiredGates);
@@ -169,6 +203,8 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
     {
         await importLevel(grid, new File([JSON.stringify(saved.level)], "saved-level.json"));
     }
+    // All menu entry points share this loader: level selection, Continue, and New Game.
+    signalLevelMetadata({ type: "start", levelId: level.id });
     saveButton.hidden = false;
     resetButton.hidden = false;
     saveStatus.textContent = "";
@@ -178,6 +214,9 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
 export function showLevelCreator(): void
 {
     clearCircuitStatus();
+    // Creator previews do not contribute to player metadata.
+    signalLevelMetadata({ type: "stop" });
+    levelResults.hide();
     activeLevelId = null;
     activeRequiredGates = undefined;
     saveButton.hidden = true;
