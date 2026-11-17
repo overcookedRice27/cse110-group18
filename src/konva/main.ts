@@ -11,6 +11,7 @@ import { circuitGrid, clearGrid } from "./utils/circuitGrid";
 import { completeLevel, getHighestCompleted } from "../html/levels";
 import { loadSavedLevel, saveLevel } from "./save";
 import { checkCircuit } from "./wire";
+import { useSpecialAbility, getCharge, increaseCharge } from "./specialAbility";
 
 const stage = new Konva.Stage({
     container: "game-screen",
@@ -75,12 +76,65 @@ validateButton.addEventListener("click", () => {
     }
 });
 
+
+const specialButton = document.getElementById(
+    "special-ability-btn"
+) as HTMLButtonElement | null;
+
+const specialStatus = document.getElementById("special-ability-status");
+const chargeText = document.getElementById("special-ability-charge");
+const chargeMeter = document.getElementById("special-ability-meter");
+
+function updateChargeDisplay(): void {
+    const charge = getCharge();
+
+    if (chargeText) {
+        chargeText.textContent = `Charge: ${charge}%`;
+    }
+
+    if (chargeMeter) {
+        chargeMeter.style.width = `${charge}%`;
+    }
+
+    if (specialButton) {
+        specialButton.disabled = charge < 100;
+    }
+}
+
+if (specialButton && specialStatus) {
+    specialButton.addEventListener("click", () => {
+        if (isCreatorView || activeLevelId === null) {
+            return;
+        }
+
+        const removed = useSpecialAbility();
+
+        if (removed > 0) {
+            specialStatus.textContent = `${removed} walls destroyed!`;
+        } else {
+            specialStatus.textContent = "No walls available to destroy!";
+        }
+
+        updateChargeDisplay();
+    });
+}
+
+updateChargeDisplay();
+
+
 // Complete only an active selected level, never a creator preview.
 stage.on("levelExitPowered", () =>
 {
     if (!isCreatorView && activeLevelId !== null)
     {
+        const previousProgress = getHighestCompleted();
+
         completeLevel(activeLevelId);
+
+        if (getHighestCompleted() > previousProgress) {
+            increaseCharge();
+            updateChargeDisplay();
+        }
         // Persist completion immediately so later levels stay unlocked after reload.
         try
         {
