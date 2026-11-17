@@ -26,10 +26,12 @@ npm run build
 
 - **Circuit board:** Drag wires and AND, OR, NOT, and XOR gates onto a grid. Inputs can be switched on and off, power propagates through connected wires and gates, and exits show whether they receive power.
 - **Level creator:** Build a layout with inputs, exits, wires, gates, and blocked cells. Mark gates and wires as fixed, try the layout in player view, and import or export JSON files.
-- **Player levels and saving:** The menu can open a level, select available levels, and save or resume a player's board and progress using local storage. The current level layouts are sample data.
-- **Circuit check:** The game provides feedback based on whether the exits are powered and can mark an active level complete.
+- **Player levels and saving:** Select from ten levels and save or resume a player's board and progress using local storage. A results screen displays the time and number of incorrect validations after a level is completed.
+- **Circuit check:** Validate that exits are powered and any required gates are connected. The game displays feedback and marks an active level complete when the check passes.
 - **Reset layout:** In a player level, reset the board to its original layout. Select Save afterward to keep the reset layout in the existing save.
-- **Truth-table mini-game logic:** Functions for rounds, gate answers, and feedback are implemented and tested; the mini-game menu is not connected to a playable screen yet.
+- **Mini-games:** Open the Mini Games menu to play the truth-table and real-life scenario games. Both provide feedback on answers.
+- **Wall Breaker:** Completing new levels charges an ability that removes up to five random wall blocks. The charge is saved with player progress.
+- **How to play:** The settings screen includes instructions for playing the game.
 
 ## Codebase structure
 
@@ -39,9 +41,9 @@ The project is written in TypeScript and uses Vite, Konva, and HTML/CSS. Most ap
 - `src/konva/main.ts` initializes the Konva stage and connects the board, creator controls, saving, and circuit checks to the screens.
 - `src/konva/grid.ts`, `gate.ts`, `wire.ts`, and `gateLogic.ts` draw the board and pieces and calculate connections and gate outputs. `constants.ts` holds shared dimensions and colors.
 - `src/konva/utils/` contains grid-coordinate helpers and the in-memory `circuitGrid`, which tracks occupied cells and checks placements.
-- `src/konva/levels/` defines the plain-data level format and handles the creator panel, loading, importing, and exporting. `src/levels/` contains the current sample player layouts.
+- `src/konva/levels/` defines the level data format and handles the creator panel, loading, importing, exporting, and gate requirements. `src/levels/` contains the player level layouts and level metadata.
 - `src/konva/save.ts` reads and writes player level data and progress in browser local storage.
-- `src/minigames/truthTable.ts` contains the truth-table mini-game's rules and round state.
+- `src/minigames/truthTable.ts` contains the truth-table mini-game's rules and round state. `src/html/` contains the mini-game screens and navigation.
 - `tests/` contains Vitest tests for the board, gates, levels, menu, circuit checking, creator, and truth-table logic. `.github/workflows/ci.yml` configures CI.
 
 The in-memory grid stores references to Konva pieces while the game runs. Level files and saves use plain JSON data, which the loader uses to recreate those pieces on the board.
@@ -50,7 +52,7 @@ The in-memory grid stores references to Konva pieces while the game runs. Level 
 
 - **Level JSON** contains a level ID and a list of pieces. Each piece has a type and grid coordinates. Gates also have a gate type, gates and wires can be marked fixed, and inputs store whether they start on or off. Exits and blocks need only their type and position. Coordinates refer to grid cells, not pixels.
 - A level may include `"requiredGates": { "AND": 2, "NOT": 1 }`. Checking the circuit requires at least that many distinct gates of each type connected upstream of an exit, in addition to powering all exits. Levels without this field keep the existing check. The check traces connectivity, so a gate on an alternate branch may count even when it is not needed to power the exit.
-- **Player saves** are stored in the browser's local storage under `logicGame.save`. A save contains a format version, the highest completed level, and the player's current level layout in the same format used by level JSON. Player saves are separate from the files exported by the level creator.
+- **Player saves** are stored in the browser's local storage under `logicGame.save`. A save contains a format version, the highest completed level, the Wall Breaker charge, and the player's current level layout in the same format used by level JSON. Player saves are separate from the files exported by the level creator.
 
 ## Level creator
 
@@ -68,7 +70,5 @@ Open **Level Creator** from the main menu to design a board.
 
 ## Current limitations
 
-- The player-level layouts are placeholders; the level selector defines ten levels, but only the first three have sample layouts connected.
-- The circuit checker currently checks whether exits are powered. More specific goals, such as requiring a particular gate, are not implemented.
 - Feedback loops in circuits are not supported.
-- Mini Games and Settings currently show placeholder messages. The truth-table logic does not yet have a playable screen.
+- Gate requirements check connectivity upstream of an exit. A gate on a connected alternate branch may count even if it is not needed to power the exit.
