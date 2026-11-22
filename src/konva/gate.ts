@@ -6,6 +6,7 @@ import {
 } from "./utils/grid";
 import { clamp } from "./utils/math";
 import { placeElement, removeElement } from "./utils/circuitGrid";
+import { playSound } from "../html/options";
 import { refreshGateConnections, updateWireElectricity } from "./wire";
 import type { GateType } from "./levels/levelData";
 
@@ -163,6 +164,7 @@ export function createGate(name: GateType, fixed = false): Konva.Group {
 
         refreshGateConnections(newGateCoordinate.x, newGateCoordinate.y);
         updateWireElectricity();
+        playSound("placeGate");
     });
 
     gateGroup.on("mouseout", () => {

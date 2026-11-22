@@ -55,44 +55,54 @@
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 id="how-to-play-title" class="modal-title fs-4">How to play</h1>
+                    <h1 id="how-to-play-title" class="modal-title fs-4">Settings</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3" id="settings-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="help-tab" data-bs-toggle="tab" data-bs-target="#help-panel" type="button" role="tab" aria-controls="help-panel" aria-selected="true">Help</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="options-tab" data-bs-toggle="tab" data-bs-target="#options-panel" type="button" role="tab" aria-controls="options-panel" aria-selected="false">Options</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                    <section class="tab-pane fade show active" id="help-panel" role="tabpanel" aria-labelledby="help-tab" tabindex="0">
                     <div class="row row-cols-1 row-cols-md-2 g-3">
                         <article class="col">
                             <div class="card h-100"><div class="card-body">
-                                <h2 class="h5 card-title">Objective</h2>
+                                <h3 class="h5 card-title">Objective</h3>
                                 <p class="card-text mb-0">Validate the circuit by turning on the exit component.</p>
                             </div></div>
                         </article>
                         <article class="col">
                             <div class="card h-100"><div class="card-body">
-                                <h2 class="h5 card-title">Input</h2>
+                                <h3 class="h5 card-title">Input</h3>
                                 <p class="card-text mb-0">Switch the input between on and off.</p>
                             </div></div>
                         </article>
                         <article class="col">
                             <div class="card h-100"><div class="card-body">
-                                <h2 class="h5 card-title">Building circuit path</h2>
+                                <h3 class="h5 card-title">Building circuit path</h3>
                                 <p class="card-text mb-0">Drag logic gates from the side panel onto the open grid spaces.</p>
                             </div></div>
                         </article>
                         <article class="col">
                             <div class="card h-100"><div class="card-body">
-                                <h2 class="h5 card-title">Connect the gates</h2>
+                                <h3 class="h5 card-title">Connect the gates</h3>
                                 <p class="card-text mb-0">Use wires on the gate's left and right pins.</p>
                             </div></div>
                         </article>
                         <article class="col">
                             <div class="card h-100"><div class="card-body">
-                                <h2 class="h5 card-title">Validate</h2>
+                                <h3 class="h5 card-title">Validate</h3>
                                 <p class="card-text mb-0">When all exits are on, validate your circuit to complete the level.</p>
                             </div></div>
                         </article>
                         <aside class="col" aria-labelledby="gate-cheat-sheet-title">
                             <div class="card h-100"><div class="card-body">
-                                <h2 id="gate-cheat-sheet-title" class="h5 card-title">Gate cheat sheet</h2>
+                                <h3 id="gate-cheat-sheet-title" class="h5 card-title">Gate cheat sheet</h3>
                                 <ul class="mb-0 ps-3">
                                     <li><strong>AND:</strong> both inputs are ON</li>
                                     <li><strong>OR:</strong> either input is ON</li>
@@ -101,7 +111,35 @@
                                 </ul>
                             </div></div>
                         </aside>
-                    </div> 
+                    </div>
+                    </section>
+                    <section class="tab-pane fade" id="options-panel" role="tabpanel" aria-labelledby="options-tab" tabindex="0">
+                        <div class="vstack gap-4">
+                            <fieldset>
+                                <legend class="h5 mb-2">Appearance</legend>
+                                <div class="form-check form-switch">
+                                    <input id="dark-mode-enabled" class="form-check-input" type="checkbox" role="switch">
+                                    <label class="form-check-label" for="dark-mode-enabled">Dark mode</label>
+                                </div>
+                            </fieldset>
+                            <fieldset>
+                                <legend class="h5 mb-2">Sound effects</legend>
+                                <label class="form-label" for="sound-effects-volume">Volume</label>
+                                <div class="sound-options-row">
+                                    <div class="volume-control">
+                                        <input id="sound-effects-volume" class="form-range" type="range" min="0" max="100" step="5">
+                                    </div>
+                                    <output id="sound-volume-value" for="sound-effects-volume">50%</output>
+                                    <button id="sound-effects-toggle" class="sound-effects-toggle" type="button" aria-pressed="true">
+                                        <span class="sound-icon-on" aria-hidden="true">🔊</span>
+                                        <span class="sound-icon-off" aria-hidden="true">🔇</span>
+                                        <span class="visually-hidden">Toggle sound effects</span>
+                                    </button>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </section>
+                    </div>
                 </div>
                 <div class="modal-footer justify-content-center">
                     <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Got it</button>

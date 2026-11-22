@@ -4,6 +4,7 @@ import { renderLevelGrid, resetLevels, restoreProgress, getHighestCompleted } fr
 import { hasProgress, hasLocalSave, loadSavedLevel, clearLocalSave } from "../konva/save";
 import { signalLevelMetadata } from "../levels/level-metadata";
 import { LEVEL_CREATOR_ENABLED } from "../konva/constants";
+import { initOptions } from "./options";
 
 const continueBtn = document.getElementById(
     "continue-btn",
@@ -32,6 +33,7 @@ const miniGame2Btn = document.getElementById("mini-game-2-btn") as HTMLButtonEle
 const miniGameBackBtn = document.getElementById("mini-game-back-btn") as HTMLButtonElement;
 
 levelCreatorBtn.hidden = !LEVEL_CREATOR_ENABLED;
+initOptions();
 
 function refreshMenu(): void {
     //new

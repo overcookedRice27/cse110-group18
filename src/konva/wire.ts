@@ -5,6 +5,7 @@ import {
     isPointerOverCreatorPanel,
 } from "./utils/grid";
 import { circuitGrid, placeElement, removeElement } from "./utils/circuitGrid";
+import { playSound } from "../html/options";
 import { calculateGateOutput } from "./gateLogic";
 import type { GateType } from "./levels/levelData";
 
@@ -132,6 +133,7 @@ export function createWire(
         updateWireAndNeighbors(gridCoord.x, gridCoord.y);
         refreshOldPosition(oldX, oldY);
         updateWireElectricity();
+        playSound("placeWire");
     });
 
     wireGroup.on("mouseout", () => {
