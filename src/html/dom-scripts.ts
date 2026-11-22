@@ -169,10 +169,6 @@ miniGame2Btn.addEventListener("click", async () => {
 
 miniGameBackBtn.addEventListener("click", showMainMenu);
 
-settingsBtn.addEventListener("click", () => {
-    alert("Opening settings panel...");
-});
-
 // Resolve every level button through the shared registry of playable layouts.
 levelGrid.addEventListener("click", async (event) =>
 {

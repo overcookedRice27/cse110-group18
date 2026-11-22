@@ -22,13 +22,4 @@ continueButton.position({ x: 400, y: 200});
 minigamesButton.position({ x: 400, y: 300 });
 settingsButton.position({ x: 400, y: 400 });
 
-//Temporary test functionality, implement screen switching later
-newGameButton.on("click", () => {alert("new game alert");});
-
-continueButton.on("click", () => {alert("continue alert");});
-
-minigamesButton.on("click", () => {alert("minigamesalert");});
-
-settingsButton.on("click", () => {alert("settings alert");});
-
 menu_screen.add(newGameButton, continueButton, minigamesButton, settingsButton);
