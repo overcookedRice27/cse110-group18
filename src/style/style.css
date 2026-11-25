@@ -2,6 +2,50 @@ body {
     margin: 0;
 }
 
+.sound-options-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.volume-control {
+    flex: 1;
+    min-width: 0;
+}
+
+.volume-control .form-range {
+    margin: 0;
+}
+
+#sound-volume-value {
+    flex: 0 0 3rem;
+    text-align: right;
+}
+
+.sound-effects-toggle {
+    align-items: center;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: 1.15rem;
+    margin: 0;
+    padding: 0;
+}
+
+.sound-icon-on {
+    display: none;
+}
+
+#sound-effects-toggle[aria-pressed="true"] .sound-icon-on {
+    display: inline;
+}
+
+#sound-effects-toggle[aria-pressed="true"] .sound-icon-off {
+    display: none;
+}
+
 .game-workspace-scroll {
     overflow-x: auto;
 }
