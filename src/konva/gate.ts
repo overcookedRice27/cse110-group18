@@ -7,7 +7,7 @@ import {
 import { clamp } from "./utils/math";
 import { placeElement, removeElement } from "./utils/circuitGrid";
 import { playSound } from "../html/options";
-import { refreshGateConnections, updateWireElectricity } from "./wire";
+import { refreshGateConnections, attachRemoveMenu, updateWireElectricity } from "./wire";
 import type { GateType } from "./levels/levelData";
 
 export const gateCells = { width: 2, height: 3 };
@@ -74,6 +74,8 @@ export function createGate(name: GateType, fixed = false): Konva.Group {
         listening: false,
     });
     gateGroup.add(fixedLabel);
+
+    attachRemoveMenu(gateGroup);
 
     gateGroup.on("click", () => {
         if (!isCreatorView || gateGroup.getAttr("gridX") === undefined)

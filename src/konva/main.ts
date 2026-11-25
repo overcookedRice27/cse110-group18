@@ -5,7 +5,7 @@ import { createLevelResults, LEVEL_RESULTS_EVENTS, type LevelResultSummary } fro
 import { drawGridLayer as createGridLayer } from "./grid";
 import { exportLevel, getLevelData } from "./levels/exportLevel";
 import { importLevel } from "./levels/importLevel";
-import { createCreatorPanel } from "./levels/creatorPanel";
+import { bindTrashHighlight, createCreatorPanel } from "./levels/creatorPanel";
 import { loadLevel } from "./levels/loadLevel";
 import type { GateRequirements, LevelData } from "./levels/levelData";
 import { missingRequiredGates } from "./levels/checkRequiredGates";
@@ -309,6 +309,7 @@ if (isCreatorView) {
     const playerPanel = createCreatorPanel(grid, false);
     playerPanel.hide();
     stage.add(creatorPanel, playerPanel);
+    bindTrashHighlight(playerPanel);
     const controls = new Konva.Layer();
     const exportButton = createButton("Export Level");
     const importButton = createButton("Import Level");

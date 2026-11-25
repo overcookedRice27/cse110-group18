@@ -8,6 +8,7 @@ import { circuitGrid, placeElement, removeElement } from "./utils/circuitGrid";
 import { playSound } from "../html/options";
 import { calculateGateOutput } from "./gateLogic";
 import type { GateType } from "./levels/levelData";
+import { openPieceMenu } from "./pieceMenu";
 
 export type WireShape = "straight" | "corner" | "tee" | "cross";
 
@@ -49,6 +50,8 @@ export function createWire(
             listening: false,
         }),
     );
+
+    attachRemoveMenu(wireGroup);
 
     wireGroup.on("mouseover", () => {
         document.body.style.cursor = "grab";
@@ -302,6 +305,42 @@ type WirePreview = {
     x: number;
     y: number;
 };
+
+// A placed piece can be removed in the creator, or in player view when it is a
+// wire or gate that the level did not fix in place.
+export function canRemovePiece(piece: Konva.Group): boolean {
+    if (piece.getAttr("gridX") === undefined) return false;
+    if (isCreatorView) return true;
+    const type = piece.getAttr("elementType");
+    return (type === "wire" || type === "gate") && piece.getAttr("fixed") !== true;
+}
+
+export function removePiece(piece: Konva.Group): boolean {
+    if (!canRemovePiece(piece)) return false;
+    const x = piece.getAttr("gridX") as number;
+    const y = piece.getAttr("gridY") as number;
+    const isGate = piece.getAttr("elementType") === "gate";
+
+    removeElement(piece);
+    piece.destroy();
+    if (isGate) {
+        refreshGateConnections(x, y);
+    } else {
+        updateWireAndNeighbors(x, y);
+    }
+    updateWireElectricity();
+    return true;
+}
+
+// Right-click a placed piece to get a Remove option.
+export function attachRemoveMenu(piece: Konva.Group): void {
+    piece.on("contextmenu", (event) => {
+        event.evt.preventDefault();
+        if (!canRemovePiece(piece)) return;
+        const type = piece.getAttr("elementType") as string;
+        openPieceMenu(event.evt.clientX, event.evt.clientY, `Remove ${type}`, () => removePiece(piece));
+    });
+}
 
 export function updateWireAndNeighbors(
     x: number,
