@@ -17,7 +17,7 @@ import { checkCircuit } from "./wire";
 import { useSpecialAbility, getCharge, increaseCharge, setCharge } from "./specialAbility";
 import { getCircuitHint } from "./circuitHints";
 import { getLevel } from "../levels/registry";
-import { signalLevelMetadata, getLevelMetadata } from "../levels/level-metadata";
+import { archiveMetadata, signalLevelMetadata, getLevelMetadata } from "../levels/level-metadata";
 
 const stage = new Konva.Stage({
     container: "game-screen",
@@ -233,10 +233,13 @@ stage.on("levelExitPowered", () =>
             increaseCharge();
             updateChargeDisplay();
         }
-        // Persist completion immediately so later levels stay unlocked after reload.
+        // Persist completion and the validation snapshot in the same save.
+        let newPersonalBest = false;
         try
         {
-            saveLevel(getLevelData(activeLevelId, activeRequiredGates), getHighestCompleted(), getCharge());
+            newPersonalBest = archiveMetadata(
+                getLevelData(activeLevelId, activeRequiredGates), getHighestCompleted(), getCharge(),
+            );
             saveStatus.textContent = "Progress saved.";
         }
         catch
@@ -250,6 +253,7 @@ stage.on("levelExitPowered", () =>
         const summary: LevelResultSummary = {
             timeSpentMs: metadata.timeSpentMs,
             incorrectValidations: metadata.incorrectValidations,
+            newPersonalBest,
         };
         levelResults.fire(LEVEL_RESULTS_EVENTS.CLEARED, { summary });
     }

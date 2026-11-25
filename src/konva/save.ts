@@ -1,4 +1,5 @@
 import type { LevelData } from "./levels/levelData";
+import type { ArchivedLevelMetadata } from "../levels/level-metadata";
 
 const SAVE_KEY = "logicGame.save"; //data stored in localStorage
 const SAVE_VERSION = 1;
@@ -10,19 +11,26 @@ type LevelSave = {
     highestCompleted: number;
     level: LevelData;
     specialAbilityCharge?: number;
+    archivedMetadata?: ArchivedLevelMetadata[];
 };
 
 // Store a board snapshot and progress using one shared format for all player levels.
 export function saveLevel(
     level: LevelData,
     highestCompleted: number,
-    specialAbilityCharge: number = 0
+    specialAbilityCharge: number = 0,
+    metadataToArchive?: ArchivedLevelMetadata,
 ): void {
+    // Older saves can omit the archive. Ordinary saves carry existing entries forward.
+    const savedArchive = loadSavedLevel()?.archivedMetadata;
+    const archivedMetadata = Array.isArray(savedArchive) ? savedArchive : [];
+    if (metadataToArchive) archivedMetadata.push(metadataToArchive);
     const data: LevelSave = {
         version: SAVE_VERSION,
         highestCompleted,
         level,
         specialAbilityCharge,
+        archivedMetadata,
     };
 
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
