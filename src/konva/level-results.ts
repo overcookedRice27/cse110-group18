@@ -16,8 +16,7 @@ export type LevelResultSummary = {
     newPersonalBest?: boolean;
 };
 
-export function createLevelResults(): Konva.Layer {
-    const results = new Konva.Layer({ name: "levelResults", visible: false });
+export function lockBackgroundWhileVisible(results: Konva.Layer): void {
     // Preserve prior states so closing restores controls without enabling locked ones.
     const disabledButtons = new Map<HTMLButtonElement, boolean>();
     const backgroundLayers = new Map<Konva.Node, boolean>();
@@ -41,6 +40,11 @@ export function createLevelResults(): Konva.Layer {
             backgroundLayers.clear();
         }
     });
+}
+
+export function createLevelResults(): Konva.Layer {
+    const results = new Konva.Layer({ name: "levelResults", visible: false });
+    lockBackgroundWhileVisible(results);
     // Cover the board so clicks cannot edit the circuit underneath the dialog.
     const backdrop = new Konva.Rect({
         width: STAGE.WIDTH,

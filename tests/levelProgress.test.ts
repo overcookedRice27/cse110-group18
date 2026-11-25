@@ -52,7 +52,7 @@ describe("player completion persistence", () => {
         const list = document.getElementById("player-gate-requirements-list")!;
         await showPlayerLevel({ id: 4, pieces: [] });
         expect(panel.hidden).toBe(false);
-        expect(list.textContent).toBe("AND: 1");
+        expect(list.textContent).toBe("OR: 1");
 
         await showPlayerLevel({ id: 1, pieces: [] });
         expect(list.textContent).toBe("No gates required.");
@@ -221,9 +221,9 @@ describe("player completion persistence", () => {
 
         expect(loadSavedLevel()?.archivedMetadata).toEqual([
             { levelId: 1, timeSpentMs: 100, correctValidations: 1, incorrectValidations: 1,
-                bestTimeMs: 250, best_attempt_count: 2 },
+                bestTimeMs: 250, best_attempt_count: 2, newFailedAttempts: 1 },
             { levelId: 1, timeSpentMs: 300, correctValidations: 2, incorrectValidations: 1,
-                bestTimeMs: 250, best_attempt_count: 1 },
+                bestTimeMs: 250, best_attempt_count: 1, newFailedAttempts: 0 },
         ]);
     });
 

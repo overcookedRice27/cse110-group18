@@ -16,8 +16,9 @@ import { loadSavedLevel, saveLevel } from "./save";
 import { checkCircuit } from "./wire";
 import { useSpecialAbility, getCharge, increaseCharge, setCharge } from "./specialAbility";
 import { getCircuitHint } from "./circuitHints";
-import { getLevel } from "../levels/registry";
+import { getLevel, LEVEL_COUNT } from "../levels/registry";
 import { archiveMetadata, signalLevelMetadata, getLevelMetadata } from "../levels/level-metadata";
+import { createFinale, FINALE_CLEARED } from "../levels/summary";
 
 const stage = new Konva.Stage({
     container: "game-screen",
@@ -33,6 +34,8 @@ grid.y(50);
 stage.add(grid);
 const levelResults = createLevelResults();
 stage.add(levelResults);
+const finale = createFinale();
+stage.add(finale);
 
 // Relay Konva button events to the HTML menu, which owns screen transitions.
 stage.on(LEVEL_RESULTS_EVENTS.CONTINUE, () => {
@@ -123,7 +126,7 @@ resetButton.addEventListener("click", () => {
 
 validateButton.addEventListener("click", () => {
     // A visible result already represents this validation; avoid duplicate attempts.
-    if (levelResults.visible()) return;
+    if (levelResults.visible() || finale.visible()) return;
     if (activeLevelId === null && isCreatorView && !readCreatorRequirements()) return;
     const exits = grid.find(
         (node: Konva.Node) => node.getAttr("elementType") === "exit"
@@ -246,6 +249,10 @@ stage.on("levelExitPowered", () =>
         {
             saveStatus.textContent = "Level completed, but progress could not be saved. Try Save again.";
         }
+        if (activeLevelId === LEVEL_COUNT) {
+            finale.fire(FINALE_CLEARED);
+            return;
+        }
         // Validation has stopped the timer; capture this level's time and failure count
         
         // for the result subtext without changing its recorded metadata.
@@ -269,6 +276,7 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
     // End the previous visit before loading; failed loads must not start a new timer.
     signalLevelMetadata({ type: "stop" });
     levelResults.hide();
+    finale.hide();
     activeLevelId = null;
     const saved = loadSavedLevel();
     // Completion can come from a saved session or from a clear whose save failed.
@@ -299,6 +307,7 @@ export function showLevelCreator(): void
     // Creator previews do not contribute to player metadata.
     signalLevelMetadata({ type: "stop" });
     levelResults.hide();
+    finale.hide();
     activeLevelId = null;
     activeRequiredGates = undefined;
     saveButton.hidden = true;

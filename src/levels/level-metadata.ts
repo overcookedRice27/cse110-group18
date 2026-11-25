@@ -9,6 +9,7 @@ export type ArchivedLevelMetadata = {
     incorrectValidations: number;
     bestTimeMs?: number;
     best_attempt_count?: number;
+    newFailedAttempts?: number;
 };
 
 // One record per playable level. Time is measured in milliseconds with a monotonic clock.
@@ -17,6 +18,7 @@ export class LevelMetadata {
     incorrectValidations = 0;
     clearAttempts = 0;
     clearTimeMs = 0;
+    archivedIncorrectValidations = 0;
     private visitStartedAt: number | null = null;
     private elapsedMs = 0;
     private startedAt: number | null = null;
@@ -65,6 +67,7 @@ export class LevelMetadata {
         this.startedAt = null;
         this.correctValidations = 0;
         this.incorrectValidations = 0;
+        this.archivedIncorrectValidations = 0;
         this.visitStartedAt = null;
         this.clearAttempts = 0;
         this.clearTimeMs = 0;
@@ -113,7 +116,9 @@ export function archiveMetadata(
         incorrectValidations: metadata.incorrectValidations,
         bestTimeMs: Math.min(metadata.clearTimeMs, previousBestTimeMs),
         best_attempt_count: Math.min(metadata.clearAttempts, previousBestAttempts),
+        newFailedAttempts: metadata.incorrectValidations - metadata.archivedIncorrectValidations,
     });
+    metadata.archivedIncorrectValidations = metadata.incorrectValidations;
     return (Number.isFinite(previousBestTimeMs) && metadata.clearTimeMs < previousBestTimeMs) ||
         (Number.isFinite(previousBestAttempts) && metadata.clearAttempts < previousBestAttempts);
 }
