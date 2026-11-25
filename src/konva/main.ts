@@ -108,6 +108,7 @@ function clearCircuitStatus(): void {
     circuitStatus.style.color = "";
 }
 
+document.getElementById("game-back-btn")!.addEventListener("click", clearCircuitStatus);
 document.addEventListener("circuitchanged", clearCircuitStatus);
 
 resetButton.addEventListener("click", () => {

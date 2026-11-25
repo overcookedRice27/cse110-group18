@@ -585,7 +585,9 @@ export function updateWireElectricity(): void {
             // Notify the owning stage when an EXIT lights up.
             
         }
-        document.dispatchEvent(new Event("circuitchanged"));
+        if (typeof document !== "undefined") {
+            document.dispatchEvent(new Event("circuitchanged"));
+        }
     }
 
 
