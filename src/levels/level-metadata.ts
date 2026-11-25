@@ -1,9 +1,23 @@
 import { LEVEL_COUNT } from "./registry";
+import { loadSavedLevel, saveLevel } from "../konva/save";
+import type { LevelData } from "../konva/levels/levelData";
+
+export type ArchivedLevelMetadata = {
+    levelId: number;
+    timeSpentMs: number;
+    correctValidations: number;
+    incorrectValidations: number;
+    bestTimeMs?: number;
+    best_attempt_count?: number;
+};
 
 // One record per playable level. Time is measured in milliseconds with a monotonic clock.
 export class LevelMetadata {
     correctValidations = 0;
     incorrectValidations = 0;
+    clearAttempts = 0;
+    clearTimeMs = 0;
+    private visitStartedAt: number | null = null;
     private elapsedMs = 0;
     private startedAt: number | null = null;
 
@@ -23,6 +37,9 @@ export class LevelMetadata {
         // Re-entering starts a fresh timed visit while retaining validation counts.
         this.elapsedMs = 0;
         this.startedAt = performance.now();
+        this.visitStartedAt = this.startedAt;
+        this.clearAttempts = 0;
+        this.clearTimeMs = 0;
     }
 
     stop(): void {
@@ -31,11 +48,26 @@ export class LevelMetadata {
         this.startedAt = null;
     }
 
+    recordValidation(passed: boolean): void {
+        this.clearAttempts++;
+        if (passed) {
+            this.correctValidations++;
+            // A clear includes time spent correcting earlier failed validations.
+            this.clearTimeMs = this.visitStartedAt === null ? 0 : performance.now() - this.visitStartedAt;
+        } else {
+            this.incorrectValidations++;
+        }
+        this.stop();
+    }
+
     reset(): void {
         this.elapsedMs = 0;
         this.startedAt = null;
         this.correctValidations = 0;
         this.incorrectValidations = 0;
+        this.visitStartedAt = null;
+        this.clearAttempts = 0;
+        this.clearTimeMs = 0;
     }
 }
 
@@ -49,6 +81,41 @@ export function getLevelMetadata(levelId: number): LevelMetadata {
         throw new RangeError(`Invalid level ID: ${levelId}`);
     }
     return LEVEL_METADATA[levelId - 1];
+}
+
+// Append a plain snapshot and save it together with the current board and progress.
+export function archiveMetadata(
+    level: LevelData,
+    highestCompleted: number,
+    specialAbilityCharge: number = 0,
+): boolean {
+    const metadata = getLevelMetadata(level.id);
+    let previousBestTimeMs = Infinity;
+    let previousBestAttempts = Infinity;
+    const archive = loadSavedLevel()?.archivedMetadata;
+    for (const entry of Array.isArray(archive) ? archive : []) {
+        if (entry?.levelId !== level.id) continue;
+        // Legacy snapshots timed only up to the first validation.
+        const legacyFirstTry = entry.incorrectValidations === 0 && entry.correctValidations > 0;
+        const savedTime = entry.bestTimeMs ?? (legacyFirstTry ? entry.timeSpentMs : undefined);
+        const savedAttempts = entry.best_attempt_count ?? (legacyFirstTry ? 1 : undefined);
+        if (typeof savedTime === "number" && Number.isFinite(savedTime) && savedTime >= 0) {
+            previousBestTimeMs = Math.min(previousBestTimeMs, savedTime);
+        }
+        if (typeof savedAttempts === "number" && Number.isInteger(savedAttempts) && savedAttempts >= 1) {
+            previousBestAttempts = Math.min(previousBestAttempts, savedAttempts);
+        }
+    }
+    saveLevel(level, highestCompleted, specialAbilityCharge, {
+        levelId: metadata.levelId,
+        timeSpentMs: metadata.timeSpentMs,
+        correctValidations: metadata.correctValidations,
+        incorrectValidations: metadata.incorrectValidations,
+        bestTimeMs: Math.min(metadata.clearTimeMs, previousBestTimeMs),
+        best_attempt_count: Math.min(metadata.clearAttempts, previousBestAttempts),
+    });
+    return (Number.isFinite(previousBestTimeMs) && metadata.clearTimeMs < previousBestTimeMs) ||
+        (Number.isFinite(previousBestAttempts) && metadata.clearAttempts < previousBestAttempts);
 }
 
 // Player navigation and validation broadcast these signals to the metadata listener.
@@ -78,9 +145,7 @@ signals.addEventListener("level-metadata", (event) => {
         activeLevel.start();
     } else if (signal.type === "validated") {
         // Count every player validation, including repeated clicks after timing stops.
-        if (signal.passed) level!.correctValidations++;
-        else level!.incorrectValidations++;
-        level!.stop();
+        level!.recordValidation(signal.passed);
         if (activeLevel === level) activeLevel = null;
     } else {
         activeLevel?.stop();

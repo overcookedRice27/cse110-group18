@@ -1,12 +1,52 @@
+// @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getLevelMetadata, LEVEL_METADATA, signalLevelMetadata } from "../src/levels/level-metadata";
+import { loadSavedLevel } from "../src/konva/save";
+import { archiveMetadata, getLevelMetadata, LEVEL_METADATA, signalLevelMetadata } from "../src/levels/level-metadata";
 
 let now = 0;
 beforeEach(() => {
+    localStorage.clear();
     // Control elapsed time precisely without waiting for real timers.
     signalLevelMetadata({ type: "reset" });
     now = 0;
     vi.spyOn(performance, "now").mockImplementation(() => now);
+});
+
+describe("saved personal bests", () => {
+    function clearLevel(timeMs: number, attempts: number, levelId = 1): boolean {
+        signalLevelMetadata({ type: "start", levelId });
+        const startedAt = now;
+        for (let attempt = 1; attempt < attempts; attempt++) {
+            now = startedAt + (timeMs * attempt) / attempts;
+            signalLevelMetadata({ type: "validated", levelId, passed: false });
+        }
+        now = startedAt + timeMs;
+        signalLevelMetadata({ type: "validated", levelId, passed: true });
+        return archiveMetadata({ id: levelId, pieces: [] }, levelId);
+    }
+
+    it("saves a faster clear even when it takes more attempts", () => {
+        expect(clearLevel(1000, 1)).toBe(false);
+        signalLevelMetadata({ type: "reset" });
+        expect(clearLevel(800, 2)).toBe(true);
+        expect(clearLevel(800, 2)).toBe(false);
+        expect(clearLevel(1200, 2)).toBe(false);
+        expect(loadSavedLevel()?.archivedMetadata?.at(-1)).toMatchObject({
+            bestTimeMs: 800,
+            best_attempt_count: 1,
+        });
+    });
+
+    it("saves fewer attempts even when the clear is slower and keeps records per level", () => {
+        expect(clearLevel(500, 1, 2)).toBe(false);
+        expect(clearLevel(1000, 3)).toBe(false);
+        expect(clearLevel(1200, 2)).toBe(true);
+        expect(clearLevel(1400, 2)).toBe(false);
+        expect(loadSavedLevel()?.archivedMetadata?.at(-1)).toMatchObject({
+            bestTimeMs: 1000,
+            best_attempt_count: 2,
+        });
+    });
 });
 afterEach(() => {
     signalLevelMetadata({ type: "reset" });

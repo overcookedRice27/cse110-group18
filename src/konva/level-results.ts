@@ -13,6 +13,7 @@ export const LEVEL_RESULTS_EVENTS = {
 export type LevelResultSummary = {
     timeSpentMs: number;
     incorrectValidations: number;
+    newPersonalBest?: boolean;
 };
 
 export function createLevelResults(): Konva.Layer {
@@ -47,10 +48,7 @@ export function createLevelResults(): Konva.Layer {
         fill: "rgba(0, 0, 0, 0.35)",
     });
     const width = 440;
-    // Leave room for two lines of statistics between the heading and buttons.
-
-
-    const height = 260;
+    const height = 278;
     const box = new Konva.Group({
         x: (STAGE.WIDTH - width) / 2,
         y: (STAGE.HEIGHT - height) / 2,
@@ -87,14 +85,27 @@ export function createLevelResults(): Konva.Layer {
     });
     box.add(summaryText);
 
+    const personalBest = new Konva.Group({ name: "resultsPersonalBest", x: 118, y: 150, visible: false });
+    personalBest.add(new Konva.Rect({ width: 204, height: 28, fill: "#17324D", cornerRadius: 14 }));
+    personalBest.add(new Konva.Text({
+        text: "new personal best!",
+        width: 204,
+        height: 28,
+        fontSize: 16,
+        fill: "#ADD8E6",
+        align: "center",
+        verticalAlign: "middle",
+    }));
+    box.add(personalBest);
+
     // Reuse the shared button shape, typography, and pointer behavior.
     const exit = createButton("Exit", { width: 180, height: 60 });
     const next = createButton("Continue", { width: 180, height: 60 });
 
     exit.name("resultsExit");
     next.name("resultsContinue");
-    exit.position({ x: 30, y: 170 });
-    next.position({ x: 230, y: 170 });
+    exit.position({ x: 30, y: 190 });
+    next.position({ x: 230, y: 190 });
 
     for (const [button, event] of [
         [exit, LEVEL_RESULTS_EVENTS.EXIT],
@@ -117,6 +128,7 @@ export function createLevelResults(): Konva.Layer {
         summaryText.setAttr("text",
             `Time to clear: ${seconds.toFixed(1)} s\nIncorrect validations: ${summary?.incorrectValidations ?? 0}`,
         );
+        personalBest.visible(summary?.newPersonalBest === true);
         results.show();
         results.moveToTop();
     });
