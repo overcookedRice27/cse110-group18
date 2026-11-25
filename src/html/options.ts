@@ -42,6 +42,7 @@ function saveOptions(): void {
 
 function applyTheme(): void {
     document.documentElement.setAttribute("data-bs-theme", options.theme);
+    document.dispatchEvent(new CustomEvent("game-theme-changed", { detail: options.theme }));
 }
 
 export function initOptions(): void {

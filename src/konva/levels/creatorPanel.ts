@@ -18,6 +18,19 @@ export function createCreatorPanel(
         panelHeight = CREATOR_PANEL.HEIGHT;
     }
     const itemWidth = CREATOR_PANEL.WIDTH - CREATOR_PANEL.PADDING * 2;
+    // Group toolbox items by purpose while keeping their text labels visible.
+    const itemColors: Record<GateType | "Wire" | "Input" | "HIGH" | "LOW" | "Exit" | "Block", string> = {
+        Input: COLORS.TOOLBOX.INPUT,
+        HIGH: COLORS.TOOLBOX.INPUT,
+        LOW: COLORS.TOOLBOX.INPUT,
+        Exit: COLORS.TOOLBOX.EXIT,
+        Wire: COLORS.TOOLBOX.WIRE,
+        Block: COLORS.TOOLBOX.BLOCK,
+        AND: COLORS.TOOLBOX.GATE,
+        OR: COLORS.TOOLBOX.GATE,
+        NOT: COLORS.TOOLBOX.GATE,
+        XOR: COLORS.TOOLBOX.GATE,
+    };
 
     panel.add(
         new Konva.Rect({
@@ -57,8 +70,15 @@ export function createCreatorPanel(
             align: "center",
             verticalAlign: "middle",
         });
+        const marker = new Konva.Circle({
+            x: 14,
+            y: CREATOR_PANEL.ITEM_HEIGHT / 2,
+            radius: 5,
+            fill: itemColors[name],
+            listening: false,
+        });
 
-        item.add(background, label);
+        item.add(background, marker, label);
         item.on("mouseover", () => {
             document.body.style.cursor = "grab";
         });

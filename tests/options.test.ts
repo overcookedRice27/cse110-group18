@@ -25,12 +25,16 @@ describe("Options controls", () => {
     it("switches Dark Mode and saves the selected theme", async () => {
         const { initOptions } = await import("../src/html/options");
         const toggle = document.getElementById("dark-mode-enabled") as HTMLInputElement;
+        const themeChanged = vi.fn();
+        document.addEventListener("game-theme-changed", themeChanged);
         initOptions();
 
         expect(document.documentElement.getAttribute("data-bs-theme")).toBe("light");
         toggle.click();
 
         expect(document.documentElement.getAttribute("data-bs-theme")).toBe("dark");
+        expect((themeChanged.mock.lastCall?.[0] as CustomEvent).detail).toBe("dark");
+        document.removeEventListener("game-theme-changed", themeChanged);
         expect(JSON.parse(localStorage.getItem("logicGame.settings") ?? "{}")).toMatchObject({
             theme: "dark",
         });

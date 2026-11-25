@@ -2,6 +2,17 @@ body {
     margin: 0;
 }
 
+/* Bootstrap's outline button colors need more contrast on the dark board. */
+[data-bs-theme="dark"] .game-sidebar .btn-outline-primary {
+    --bs-btn-color: #a9c8ff;
+    --bs-btn-border-color: #a9c8ff;
+}
+
+[data-bs-theme="dark"] .game-sidebar .btn-outline-secondary {
+    --bs-btn-color: #e1e5e9;
+    --bs-btn-border-color: #aab2bb;
+}
+
 .sound-options-row {
     display: flex;
     align-items: center;
@@ -70,6 +81,20 @@ body {
     gap: 0.75rem;
     flex: 0 0 14rem;
     width: 14rem;
+}
+
+/* A small guide leaves the rest of the board available for interaction. */
+.game-tutorial {
+    position: fixed;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 1030;
+    width: min(21rem, calc(100vw - 2rem));
+}
+
+.tutorial-highlight {
+    outline: 4px solid #e48a00;
+    outline-offset: 3px;
 }
 
 .gate-requirements-fields {
