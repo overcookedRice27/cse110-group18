@@ -85,6 +85,32 @@ describe("player completion persistence", () => {
         expect(document.getElementById("level-save-status")!.textContent).toContain("Select Save");
     });
 
+    it.each([
+        { savedProgress: 1, sessionProgress: 0, wasCleared: true },
+        { savedProgress: 0, sessionProgress: 1, wasCleared: true },
+        { savedProgress: 0, sessionProgress: 0, wasCleared: false },
+    ])("restores a saved board only if the level is unfinished ($savedProgress saved, $sessionProgress in session)", async ({
+        savedProgress, sessionProgress, wasCleared,
+    }) => {
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const { getLevel } = await import("../src/levels/registry");
+        const { loadLevel } = await import("../src/konva/levels/loadLevel");
+        const { importLevel } = await import("../src/konva/levels/importLevel");
+        const { restoreProgress } = await import("../src/html/levels");
+        const { saveLevel } = await import("../src/konva/save");
+        const savedBoard = { id: 1, pieces: [] };
+        restoreProgress(sessionProgress);
+        saveLevel(savedBoard, savedProgress);
+        const previousSave = localStorage.getItem("logicGame.save");
+        vi.mocked(importLevel).mockClear();
+
+        await showPlayerLevel(savedBoard);
+
+        expect(loadLevel).toHaveBeenLastCalledWith(expect.anything(), wasCleared ? getLevel(1) : savedBoard);
+        expect(importLevel).toHaveBeenCalledTimes(wasCleared ? 0 : 1);
+        expect(localStorage.getItem("logicGame.save")).toBe(previousSave);
+    });
+
     it("keeps the board when the player cancels reset", async () => {
         const { showPlayerLevel, showLevelCreator } = await import("../src/konva/main");
         const { loadLevel } = await import("../src/konva/levels/loadLevel");

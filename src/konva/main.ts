@@ -270,16 +270,18 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
     signalLevelMetadata({ type: "stop" });
     levelResults.hide();
     activeLevelId = null;
-    openPlayer(level);
-    showPlayerRequirements(activeRequiredGates);
     const saved = loadSavedLevel();
+    // Completion can come from a saved session or from a clear whose save failed.
+    const wasCleared = level.id <= Math.max(getHighestCompleted(), saved?.highestCompleted ?? 0);
+    openPlayer(wasCleared ? getLevel(level.id) : level);
+    showPlayerRequirements(activeRequiredGates);
     setCharge(saved?.specialAbilityCharge ?? 0);
     updateChargeDisplay();
 
     if (specialStatus) {
         specialStatus.textContent = "";
     }
-    if (saved?.level.id === level.id)
+    if (!wasCleared && saved?.level.id === level.id)
     {
         await importLevel(grid, new File([JSON.stringify(saved.level)], "saved-level.json"));
     }
