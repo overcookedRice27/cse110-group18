@@ -11,7 +11,7 @@ export const LEVEL_RESULTS_EVENTS = {
 
 // A snapshot keeps the displayed result fixed after the validation timer stops.
 export type LevelResultSummary = {
-    timeSpentMs: number;
+    clearTimeMs: number;
     incorrectValidations: number;
     newPersonalBest?: boolean;
 };
@@ -128,7 +128,7 @@ export function createLevelResults(): Konva.Layer {
     results.on(LEVEL_RESULTS_EVENTS.CLEARED, (event) => {
         // Render each success snapshot anew so another level cannot retain old stats.
         const summary = (event as Konva.KonvaEventObject<Event> & { summary?: LevelResultSummary }).summary;
-        const seconds = Math.max(0, (summary?.timeSpentMs ?? 0)) / 1000;
+        const seconds = Math.max(0, (summary?.clearTimeMs ?? 0)) / 1000;
         summaryText.setAttr("text",
             `Time to clear: ${seconds.toFixed(1)} s\nIncorrect validations: ${summary?.incorrectValidations ?? 0}`,
         );

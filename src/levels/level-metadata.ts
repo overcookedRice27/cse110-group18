@@ -19,13 +19,12 @@ export class LevelMetadata {
     clearAttempts = 0;
     clearTimeMs = 0;
     archivedIncorrectValidations = 0;
-    private visitStartedAt: number | null = null;
     private elapsedMs = 0;
     private startedAt: number | null = null;
 
     constructor(readonly levelId: number) {}
 
-    // Include the running interval when metadata is read before validation finishes.
+    // Include the active visit alongside time accumulated on earlier visits.
     get timeSpentMs(): number {
         return this.elapsedMs + (this.startedAt === null ? 0 : performance.now() - this.startedAt);
     }
@@ -36,10 +35,7 @@ export class LevelMetadata {
 
     start(): void {
         if (this.startedAt !== null) return;
-        // Re-entering starts a fresh timed visit while retaining validation counts.
-        this.elapsedMs = 0;
         this.startedAt = performance.now();
-        this.visitStartedAt = this.startedAt;
         this.clearAttempts = 0;
         this.clearTimeMs = 0;
     }
@@ -54,12 +50,13 @@ export class LevelMetadata {
         this.clearAttempts++;
         if (passed) {
             this.correctValidations++;
-            // A clear includes time spent correcting earlier failed validations.
-            this.clearTimeMs = this.visitStartedAt === null ? 0 : performance.now() - this.visitStartedAt;
+            // Preserve the completed time for results and archiving before resetting the timer.
+            this.clearTimeMs = this.timeSpentMs;
+            this.elapsedMs = 0;
+            this.startedAt = null;
         } else {
             this.incorrectValidations++;
         }
-        this.stop();
     }
 
     reset(): void {
@@ -68,7 +65,6 @@ export class LevelMetadata {
         this.correctValidations = 0;
         this.incorrectValidations = 0;
         this.archivedIncorrectValidations = 0;
-        this.visitStartedAt = null;
         this.clearAttempts = 0;
         this.clearTimeMs = 0;
     }
@@ -111,7 +107,7 @@ export function archiveMetadata(
     }
     saveLevel(level, highestCompleted, specialAbilityCharge, {
         levelId: metadata.levelId,
-        timeSpentMs: metadata.timeSpentMs,
+        timeSpentMs: metadata.clearTimeMs,
         correctValidations: metadata.correctValidations,
         incorrectValidations: metadata.incorrectValidations,
         bestTimeMs: Math.min(metadata.clearTimeMs, previousBestTimeMs),
@@ -149,9 +145,8 @@ signals.addEventListener("level-metadata", (event) => {
         activeLevel = level!;
         activeLevel.start();
     } else if (signal.type === "validated") {
-        // Count every player validation, including repeated clicks after timing stops.
         level!.recordValidation(signal.passed);
-        if (activeLevel === level) activeLevel = null;
+        if (signal.passed && activeLevel === level) activeLevel = null;
     } else {
         activeLevel?.stop();
         activeLevel = null;

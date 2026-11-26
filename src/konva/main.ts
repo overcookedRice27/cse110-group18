@@ -139,12 +139,20 @@ validateButton.addEventListener("click", () => {
 
     const requiredGates = activeLevelId === null ? creatorRequiredGates : activeRequiredGates;
     const missing = missingRequiredGates(requiredGates ?? {});
-    if (missing.length > 0) {
-        if (!isCreatorView && activeLevelId !== null) {
-            signalLevelMetadata({ type: "validated", levelId: activeLevelId, passed: false });
+    const passed = result.passed && missing.length === 0;
+    let elapsedMessage = "";
+    if (!isCreatorView && activeLevelId !== null) {
+        signalLevelMetadata({ type: "validated", levelId: activeLevelId, passed });
+        if (!passed) {
+            const seconds = getLevelMetadata(activeLevelId).timeSpentMs / 1000;
+            elapsedMessage = ` Time spent: ${seconds.toFixed(1)} s.`;
         }
+    }
+
+    if (missing.length > 0) {
         const powerMessage = result.passed ? "" : `${result.message} `;
-        circuitStatus.textContent = `${powerMessage}Connect required gate(s) to an exit: ${missing.join(", ")}.`;
+        circuitStatus.textContent =
+            `${powerMessage}Connect required gate(s) to an exit: ${missing.join(", ")}.${elapsedMessage}`;
         circuitStatus.style.color = "red";
         return;
     }
@@ -154,13 +162,8 @@ validateButton.addEventListener("click", () => {
         exitCount: exits.length,
         inputsOnCount: inputs.filter((i) => i.getAttr("powerSource") === true).length,
     });
-    circuitStatus.textContent = hint ? `${result.message} Hint: ${hint}` : result.message;
+    circuitStatus.textContent = (hint ? `${result.message} Hint: ${hint}` : result.message) + elapsedMessage;
     circuitStatus.style.color = result.passed ? "green" : "red";
-
-    // Both successful and failed player validations end the current timed interval.
-    if (!isCreatorView && activeLevelId !== null) {
-        signalLevelMetadata({ type: "validated", levelId: activeLevelId, passed: result.passed });
-    }
 
     if (result.passed) {
         stage.fire("levelExitPowered");
@@ -253,12 +256,9 @@ stage.on("levelExitPowered", () =>
             finale.fire(FINALE_CLEARED);
             return;
         }
-        // Validation has stopped the timer; capture this level's time and failure count
-        
-        // for the result subtext without changing its recorded metadata.
         const metadata = getLevelMetadata(activeLevelId);
         const summary: LevelResultSummary = {
-            timeSpentMs: metadata.timeSpentMs,
+            clearTimeMs: metadata.clearTimeMs,
             incorrectValidations: metadata.incorrectValidations,
             newPersonalBest,
         };
