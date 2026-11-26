@@ -32,7 +32,7 @@ afterEach(() => {
 function showSummary(results: Konva.Layer, levelId: number): void {
     const metadata = getLevelMetadata(levelId);
     results.fire(LEVEL_RESULTS_EVENTS.CLEARED, {
-        summary: { timeSpentMs: metadata.timeSpentMs, incorrectValidations: metadata.incorrectValidations },
+        summary: { clearTimeMs: metadata.clearTimeMs, incorrectValidations: metadata.incorrectValidations },
     });
 }
 

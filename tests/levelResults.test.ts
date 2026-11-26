@@ -44,14 +44,30 @@ describe("level results submenu", () => {
     it("shows clear time and incorrect validations below the heading", () => {
         const results = createLevelResults();
         results.fire(LEVEL_RESULTS_EVENTS.CLEARED, {
-            summary: { timeSpentMs: 12345, incorrectValidations: 3 },
+            summary: { clearTimeMs: 12345, incorrectValidations: 3 },
         });
         const summary = results.findOne(".resultsSummary")!;
         expect(summary.getAttr("text")).toBe("Time to clear: 12.3 s\nIncorrect validations: 3");
         results.fire(LEVEL_RESULTS_EVENTS.CLEARED, {
-            summary: { timeSpentMs: 0, incorrectValidations: 0 },
+            summary: { clearTimeMs: 0, incorrectValidations: 0 },
         });
         expect(summary.getAttr("text")).toBe("Time to clear: 0.0 s\nIncorrect validations: 0");
+        results.hide();
+        results.destroy();
+    });
+
+    it("shows a light blue personal-best message only for an improved clear", () => {
+        const results = createLevelResults();
+        const badge = results.findOne(".resultsPersonalBest")!;
+        const summary = { clearTimeMs: 1000, incorrectValidations: 0 };
+        results.fire(LEVEL_RESULTS_EVENTS.CLEARED, { summary: { ...summary, newPersonalBest: true } });
+        expect(badge.visible()).toBe(true);
+        expect(badge.findOne("Text")?.getAttrs()).toMatchObject({
+            text: "new personal best!",
+            fill: "#ADD8E6",
+        });
+        results.fire(LEVEL_RESULTS_EVENTS.CLEARED, { summary });
+        expect(badge.visible()).toBe(false);
         results.hide();
         results.destroy();
     });

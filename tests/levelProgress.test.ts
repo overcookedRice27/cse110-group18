@@ -52,7 +52,7 @@ describe("player completion persistence", () => {
         const list = document.getElementById("player-gate-requirements-list")!;
         await showPlayerLevel({ id: 4, pieces: [] });
         expect(panel.hidden).toBe(false);
-        expect(list.textContent).toBe("AND: 1");
+        expect(list.textContent).toBe("OR: 1");
 
         await showPlayerLevel({ id: 1, pieces: [] });
         expect(list.textContent).toBe("No gates required.");
@@ -83,6 +83,32 @@ describe("player completion persistence", () => {
         expect(localStorage.getItem("logicGame.save")).toBe(previousSave);
         expect(document.getElementById("circuit-status")!.textContent).toBe("");
         expect(document.getElementById("level-save-status")!.textContent).toContain("Select Save");
+    });
+
+    it.each([
+        { savedProgress: 1, sessionProgress: 0, wasCleared: true },
+        { savedProgress: 0, sessionProgress: 1, wasCleared: true },
+        { savedProgress: 0, sessionProgress: 0, wasCleared: false },
+    ])("restores a saved board regardless of completion progress ($savedProgress saved, $sessionProgress in session)", async ({
+        savedProgress, sessionProgress, wasCleared,
+    }) => {
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const { getLevel } = await import("../src/levels/registry");
+        const { loadLevel } = await import("../src/konva/levels/loadLevel");
+        const { importLevel } = await import("../src/konva/levels/importLevel");
+        const { restoreProgress } = await import("../src/html/levels");
+        const { saveLevel } = await import("../src/konva/save");
+        const savedBoard = { id: 1, pieces: [] };
+        restoreProgress(sessionProgress);
+        saveLevel(savedBoard, savedProgress);
+        const previousSave = localStorage.getItem("logicGame.save");
+        vi.mocked(importLevel).mockClear();
+
+        await showPlayerLevel(savedBoard);
+
+        expect(loadLevel).toHaveBeenLastCalledWith(expect.anything(), wasCleared ? getLevel(1) : savedBoard);
+        expect(importLevel).toHaveBeenCalledTimes(1);
+        expect(localStorage.getItem("logicGame.save")).toBe(previousSave);
     });
 
     it("keeps the board when the player cancels reset", async () => {
@@ -171,6 +197,68 @@ describe("player completion persistence", () => {
             level: { id: 1, requiredGates: { AND: 2 } },
         });
     });
+    it("displays cumulative time after each failed validation and on the clear screen", async () => {
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const { createLevelResults } = await import("../src/konva/level-results");
+        const requirements = await import("../src/konva/levels/checkRequiredGates");
+        vi.spyOn(requirements, "missingRequiredGates")
+            .mockReturnValueOnce(["AND (1/2)"])
+            .mockReturnValueOnce(["AND (1/2)"])
+            .mockReturnValue([]);
+        const now = vi.spyOn(performance, "now").mockReturnValue(1000);
+        await showPlayerLevel({ id: 1, pieces: [] });
+
+        const results = vi.mocked(createLevelResults).mock.results.at(-1)!.value;
+        const validate = document.getElementById("validate-circuit-btn")!;
+        const status = document.getElementById("circuit-status")!;
+        now.mockReturnValue(2000);
+        validate.click();
+        expect(results.visible()).toBe(false);
+        expect(status.textContent).toContain("Time spent: 1.0 s.");
+
+        now.mockReturnValue(3500);
+        validate.click();
+        expect(results.visible()).toBe(false);
+        expect(status.textContent).toContain("Time spent: 2.5 s.");
+
+        now.mockReturnValue(4500);
+        validate.click();
+        expect(results.visible()).toBe(true);
+        expect(results.findOne(".resultsSummary")?.getAttr("text")).toBe(
+            "Time to clear: 3.5 s\nIncorrect validations: 2",
+        );
+    });
+
+    it("appends completion snapshots to an older save and preserves them on manual save", async () => {
+        const level = { id: 1, pieces: [] };
+        localStorage.setItem("logicGame.save", JSON.stringify({ version: 1, highestCompleted: 0, level }));
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const { loadSavedLevel } = await import("../src/konva/save");
+        const requirements = await import("../src/konva/levels/checkRequiredGates");
+        vi.spyOn(requirements, "missingRequiredGates").mockReturnValueOnce(["AND (1/2)"]);
+        const now = vi.spyOn(performance, "now").mockReturnValue(100);
+        await showPlayerLevel(level);
+
+        const validate = document.getElementById("validate-circuit-btn")!;
+        now.mockReturnValue(200);
+        validate.click();
+        now.mockReturnValue(350);
+        validate.click();
+        await showPlayerLevel(level);
+        now.mockReturnValue(650);
+        validate.click();
+        await showPlayerLevel(level);
+        document.getElementById("level-save-btn")!.click();
+        expect(document.getElementById("level-save-status")!.textContent).toBe("Level saved.");
+
+        expect(loadSavedLevel()?.archivedMetadata).toEqual([
+            { levelId: 1, timeSpentMs: 250, correctValidations: 1, incorrectValidations: 1,
+                bestTimeMs: 250, best_attempt_count: 2, newFailedAttempts: 1 },
+            { levelId: 1, timeSpentMs: 300, correctValidations: 2, incorrectValidations: 1,
+                bestTimeMs: 250, best_attempt_count: 1, newFailedAttempts: 0 },
+        ]);
+    });
+
     // An unpowered exit must fail validation without writing to storage or marking
     // the level complete. Check both a fresh game and preservation of an older save.
     // false: fail Level 1 with no save; true: fail Level 2 after saving Level 1.
@@ -195,7 +283,7 @@ describe("player completion persistence", () => {
             grid.add(new Konva.Group({ elementType: "exit", powered: false }));
         });
         await showPlayerLevel({ id: levelId, pieces: [] });
-        // Entering through the shared loader starts tracking; failed validation ends it.
+        // Entering through the shared loader starts tracking through failed validations.
         expect(getLevelMetadata(levelId).isTracking).toBe(true);
         // Observe writes after setup so seeding the older save does not count.
         const write = vi.spyOn(Storage.prototype, "setItem");
@@ -205,7 +293,7 @@ describe("player completion persistence", () => {
         // Confirm validation actually failed, then verify it neither wrote storage
         // nor replaced the older board nor advanced completion in this session.
         expect(document.getElementById("circuit-status")!.textContent).toContain("Level Failed");
-        expect(getLevelMetadata(levelId).isTracking).toBe(false);
+        expect(getLevelMetadata(levelId).isTracking).toBe(true);
         expect(getLevelMetadata(levelId).incorrectValidations).toBe(1);
         expect(getLevelMetadata(levelId).correctValidations).toBe(0);
         expect(results.visible()).toBe(false);
@@ -238,7 +326,7 @@ describe("player completion persistence", () => {
             // The validation event passes the active level's stopped metadata to the popup.
             const metadata = getLevelMetadata(id);
             expect(results.findOne(".resultsSummary")!.getAttr("text")).toBe(
-                `Time to clear: ${(metadata.timeSpentMs / 1000).toFixed(1)} s\nIncorrect validations: ${metadata.incorrectValidations}`,
+                `Time to clear: ${(metadata.clearTimeMs / 1000).toFixed(1)} s\nIncorrect validations: ${metadata.incorrectValidations}`,
             );
             expect(getHighestCompleted()).toBe(id);
             expect(loadSavedLevel()).toMatchObject({ highestCompleted: id, level: { id } });

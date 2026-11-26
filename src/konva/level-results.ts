@@ -11,12 +11,12 @@ export const LEVEL_RESULTS_EVENTS = {
 
 // A snapshot keeps the displayed result fixed after the validation timer stops.
 export type LevelResultSummary = {
-    timeSpentMs: number;
+    clearTimeMs: number;
     incorrectValidations: number;
+    newPersonalBest?: boolean;
 };
 
-export function createLevelResults(): Konva.Layer {
-    const results = new Konva.Layer({ name: "levelResults", visible: false });
+export function lockBackgroundWhileVisible(results: Konva.Layer): void {
     // Preserve prior states so closing restores controls without enabling locked ones.
     const disabledButtons = new Map<HTMLButtonElement, boolean>();
     const backgroundLayers = new Map<Konva.Node, boolean>();
@@ -40,6 +40,11 @@ export function createLevelResults(): Konva.Layer {
             backgroundLayers.clear();
         }
     });
+}
+
+export function createLevelResults(): Konva.Layer {
+    const results = new Konva.Layer({ name: "levelResults", visible: false });
+    lockBackgroundWhileVisible(results);
     // Cover the board so clicks cannot edit the circuit underneath the dialog.
     const backdrop = new Konva.Rect({
         width: STAGE.WIDTH,
@@ -47,10 +52,7 @@ export function createLevelResults(): Konva.Layer {
         fill: "rgba(0, 0, 0, 0.35)",
     });
     const width = 440;
-    // Leave room for two lines of statistics between the heading and buttons.
-
-
-    const height = 260;
+    const height = 278;
     const box = new Konva.Group({
         x: (STAGE.WIDTH - width) / 2,
         y: (STAGE.HEIGHT - height) / 2,
@@ -87,14 +89,27 @@ export function createLevelResults(): Konva.Layer {
     });
     box.add(summaryText);
 
+    const personalBest = new Konva.Group({ name: "resultsPersonalBest", x: 118, y: 150, visible: false });
+    personalBest.add(new Konva.Rect({ width: 204, height: 28, fill: "#17324D", cornerRadius: 14 }));
+    personalBest.add(new Konva.Text({
+        text: "new personal best!",
+        width: 204,
+        height: 28,
+        fontSize: 16,
+        fill: "#ADD8E6",
+        align: "center",
+        verticalAlign: "middle",
+    }));
+    box.add(personalBest);
+
     // Reuse the shared button shape, typography, and pointer behavior.
     const exit = createButton("Exit", { width: 180, height: 60 });
     const next = createButton("Continue", { width: 180, height: 60 });
 
     exit.name("resultsExit");
     next.name("resultsContinue");
-    exit.position({ x: 30, y: 170 });
-    next.position({ x: 230, y: 170 });
+    exit.position({ x: 30, y: 190 });
+    next.position({ x: 230, y: 190 });
 
     for (const [button, event] of [
         [exit, LEVEL_RESULTS_EVENTS.EXIT],
@@ -113,10 +128,11 @@ export function createLevelResults(): Konva.Layer {
     results.on(LEVEL_RESULTS_EVENTS.CLEARED, (event) => {
         // Render each success snapshot anew so another level cannot retain old stats.
         const summary = (event as Konva.KonvaEventObject<Event> & { summary?: LevelResultSummary }).summary;
-        const seconds = Math.max(0, (summary?.timeSpentMs ?? 0)) / 1000;
+        const seconds = Math.max(0, (summary?.clearTimeMs ?? 0)) / 1000;
         summaryText.setAttr("text",
             `Time to clear: ${seconds.toFixed(1)} s\nIncorrect validations: ${summary?.incorrectValidations ?? 0}`,
         );
+        personalBest.visible(summary?.newPersonalBest === true);
         results.show();
         results.moveToTop();
     });
