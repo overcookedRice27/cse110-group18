@@ -16,7 +16,7 @@ vi.mock("../src/konva/level-results", async (importOriginal) => {
 });
 vi.mock("../src/konva/grid", () => ({ drawGridLayer: () => new Konva.Group() }));
 vi.mock("../src/konva/button", () => ({ createButton: vi.fn(() => new Konva.Group()) }));
-vi.mock("../src/konva/levels/creatorPanel", () => ({ createCreatorPanel: () => new Konva.Group() }));
+vi.mock("../src/konva/levels/creatorPanel", () => ({ createCreatorPanel: () => new Konva.Group(), bindTrashHighlight: () => undefined }));
 vi.mock("../src/konva/levels/loadLevel", () => ({
     // A powered exit represents a correctly solved board for validation.
     loadLevel: vi.fn((grid: Konva.Group) => grid.add(new Konva.Group({ elementType: "exit", powered: true }))),

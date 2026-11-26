@@ -42,6 +42,18 @@ export const CREATOR_PANEL = {
     PLAYER_ITEMS: ["Wire", "AND", "OR", "NOT", "XOR"] as const,
 };
 
+// Player-view drop target for deleting pieces, just below the player palette.
+export const TRASH = {
+    X: CREATOR_PANEL.X,
+    Y: CREATOR_PANEL.Y + CREATOR_PANEL.PLAYER_HEIGHT + 16,
+    WIDTH: CREATOR_PANEL.WIDTH,
+    HEIGHT: 64,
+    // Drops count a little beyond the visible button so large gates are easy to throw away.
+    HIT_MARGIN_X: 8,
+    HIT_MARGIN_TOP: 12,
+    HIT_MARGIN_BOTTOM: 110,
+};
+
 export const STAGE = {
     WIDTH: STAGE_WIDTH,
     HEIGHT: STAGE_HEIGHT,

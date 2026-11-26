@@ -1,9 +1,11 @@
 import Konva from "konva";
-import { CREATOR_PANEL, isCreatorView } from "../constants";
+import { CREATOR_PANEL, TRASH, isCreatorView } from "../constants";
 
 export function isPointerOverCreatorPanel(element: Konva.Group): boolean {
     const pointer = element.getStage()?.getPointerPosition();
     if (!pointer) return false;
+
+    if (!isCreatorView && isPointerOverTrash(pointer)) return true;
 
     let panelHeight = CREATOR_PANEL.PLAYER_HEIGHT;
     if (isCreatorView) panelHeight = CREATOR_PANEL.HEIGHT;
@@ -13,6 +15,15 @@ export function isPointerOverCreatorPanel(element: Konva.Group): boolean {
         pointer.x < CREATOR_PANEL.X + CREATOR_PANEL.WIDTH &&
         pointer.y >= CREATOR_PANEL.Y &&
         pointer.y < CREATOR_PANEL.Y + panelHeight
+    );
+}
+
+export function isPointerOverTrash(pointer: { x: number; y: number }): boolean {
+    return (
+        pointer.x >= TRASH.X &&
+        pointer.x < TRASH.X + TRASH.WIDTH + TRASH.HIT_MARGIN_X &&
+        pointer.y >= TRASH.Y - TRASH.HIT_MARGIN_TOP &&
+        pointer.y < TRASH.Y + TRASH.HEIGHT + TRASH.HIT_MARGIN_BOTTOM
     );
 }
 
