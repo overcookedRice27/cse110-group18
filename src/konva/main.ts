@@ -245,7 +245,14 @@ stage.on("levelExitPowered", () =>
         try
         {
             newPersonalBest = archiveMetadata(
-                getLevelData(activeLevelId, activeRequiredGates), getHighestCompleted(), getCharge(),
+                {
+                    ...getLevel(activeLevelId),
+                    ...(activeRequiredGates
+                        ? { requiredGates: activeRequiredGates }
+                        : {}),
+                },
+                getHighestCompleted(),
+                getCharge(),
             );
             saveStatus.textContent = "Progress saved.";
         }
@@ -290,7 +297,7 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
     if (specialStatus) {
         specialStatus.textContent = "";
     }
-    if (!wasCleared && saved?.level.id === level.id)
+    if (saved?.level.id === level.id)
     {
         await importLevel(grid, new File([JSON.stringify(saved.level)], "saved-level.json"));
     }
