@@ -1,6 +1,6 @@
 {
     "id": 4,
-    "requiredGates": { "AND": 1 },
+    "requiredGates": { "OR": 1 },
     "pieces": [
         {
             "type": "block",
@@ -15,7 +15,7 @@
         },
         {
             "type": "gate",
-            "gateType": "AND",
+            "gateType": "OR",
             "fixed": false,
             "x": 3,
             "y": 1

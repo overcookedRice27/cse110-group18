@@ -66,50 +66,54 @@ describe("level metadata signals", () => {
         }
     });
 
-    // Either validation result must end timing and increment only its own counter.
-    it.each([true, false])("stops time and counts validation (passed: %s)", (passed) => {
+    it.each([true, false])("counts validation and resets time only on a clear (passed: %s)", (passed) => {
         signalLevelMetadata({ type: "start", levelId: 2 });
         now = 1500;
         expect(getLevelMetadata(2).timeSpentMs).toBe(1500);
         signalLevelMetadata({ type: "validated", levelId: 2, passed });
         now = 5000;
         const entry = getLevelMetadata(2);
-        expect(entry.timeSpentMs).toBe(1500);
-        expect(entry.isTracking).toBe(false);
+        expect(entry.timeSpentMs).toBe(passed ? 0 : 5000);
+        expect(entry.clearTimeMs).toBe(passed ? 1500 : 0);
+        expect(entry.isTracking).toBe(!passed);
         expect(entry.correctValidations).toBe(passed ? 1 : 0);
         expect(entry.incorrectValidations).toBe(passed ? 0 : 1);
     });
 
-    // Reopening discards the previous visit's time but preserves validation totals.
-    // Revalidating while stopped counts another result without adding elapsed time.
-    it("resets time on re-entry while preserving validation counts", () => {
+    it("pauses on exit, resumes accumulated time, and starts from zero after a clear", () => {
         signalLevelMetadata({ type: "start", levelId: 1 });
         now = 100;
         signalLevelMetadata({ type: "validated", levelId: 1, passed: false });
         now = 200;
         signalLevelMetadata({ type: "validated", levelId: 1, passed: false });
-        expect(getLevelMetadata(1).timeSpentMs).toBe(100);
+        expect(getLevelMetadata(1).timeSpentMs).toBe(200);
+        signalLevelMetadata({ type: "stop" });
+        now = 1000;
         signalLevelMetadata({ type: "start", levelId: 1 });
-        expect(getLevelMetadata(1).timeSpentMs).toBe(0);
-        now = 250;
+        expect(getLevelMetadata(1).timeSpentMs).toBe(200);
+        now = 1050;
         signalLevelMetadata({ type: "validated", levelId: 1, passed: true });
-        expect(getLevelMetadata(1).timeSpentMs).toBe(50);
+        expect(getLevelMetadata(1).timeSpentMs).toBe(0);
+        expect(getLevelMetadata(1).clearTimeMs).toBe(250);
         expect(getLevelMetadata(1).incorrectValidations).toBe(2);
         expect(getLevelMetadata(1).correctValidations).toBe(1);
+        now = 1500;
+        signalLevelMetadata({ type: "start", levelId: 1 });
+        now = 1600;
+        expect(getLevelMetadata(1).timeSpentMs).toBe(100);
     });
 
-    // Returning from another level resets only the reopened level's time.
-    it("starts a fresh visit after navigating away and back", () => {
+    it("keeps independent elapsed time when switching levels", () => {
         signalLevelMetadata({ type: "start", levelId: 1 });
         now = 100;
         signalLevelMetadata({ type: "start", levelId: 2 });
         now = 300;
         signalLevelMetadata({ type: "start", levelId: 1 });
-        expect(getLevelMetadata(1).timeSpentMs).toBe(0);
+        expect(getLevelMetadata(1).timeSpentMs).toBe(100);
         expect(getLevelMetadata(2).timeSpentMs).toBe(200);
         now = 350;
         signalLevelMetadata({ type: "stop" });
-        expect(getLevelMetadata(1).timeSpentMs).toBe(50);
+        expect(getLevelMetadata(1).timeSpentMs).toBe(150);
     });
 
     // Navigation stops the old level, and returning to the menu stops the current level.
