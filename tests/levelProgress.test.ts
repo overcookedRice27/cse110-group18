@@ -89,7 +89,7 @@ describe("player completion persistence", () => {
         { savedProgress: 1, sessionProgress: 0, wasCleared: true },
         { savedProgress: 0, sessionProgress: 1, wasCleared: true },
         { savedProgress: 0, sessionProgress: 0, wasCleared: false },
-    ])("restores a saved board only if the level is unfinished ($savedProgress saved, $sessionProgress in session)", async ({
+    ])("restores a saved board regardless of completion progress ($savedProgress saved, $sessionProgress in session)", async ({
         savedProgress, sessionProgress, wasCleared,
     }) => {
         const { showPlayerLevel } = await import("../src/konva/main");
@@ -107,7 +107,7 @@ describe("player completion persistence", () => {
         await showPlayerLevel(savedBoard);
 
         expect(loadLevel).toHaveBeenLastCalledWith(expect.anything(), wasCleared ? getLevel(1) : savedBoard);
-        expect(importLevel).toHaveBeenCalledTimes(wasCleared ? 0 : 1);
+        expect(importLevel).toHaveBeenCalledTimes(1);
         expect(localStorage.getItem("logicGame.save")).toBe(previousSave);
     });
 
