@@ -159,6 +159,20 @@ describe("main menu buttons go to the right place", () => {
         expect(visibleScreens()).toEqual(["main-menu"]);
     });
 
+    it("defaults to Options and selects it again when Settings opens", async () => {
+        await loadMenu();
+        const optionsTab = el("options-tab");
+        const helpTab = el("help-tab");
+        expect(optionsTab.getAttribute("aria-selected")).toBe("true");
+        expect(helpTab.getAttribute("aria-selected")).toBe("false");
+        expect(el("options-panel").classList.contains("show")).toBe(true);
+        expect(el("help-panel").classList.contains("show")).toBe(false);
+
+        const selectOptions = vi.spyOn(optionsTab, "click");
+        el("how-to-play-modal").dispatchEvent(new Event("show.bs.modal"));
+        expect(selectOptions).toHaveBeenCalledOnce();
+    });
+
     it("Back returns to the main menu from level select and from the game", async () => {
         await loadMenu();
         el("levels-btn").click();

@@ -79,7 +79,7 @@ export const BUTTON = {
     HEIGHT: 80,
 };
 
-export const COLORS = {
+const lightColors = {
     UI: {
         BACKGROUND: "#FFFFFF",
     },
@@ -102,4 +102,26 @@ export const COLORS = {
         BACKGROUND: "#FFFFFF",
         STROKE: "#222222",
     },
+    BLOCK: { BACKGROUND: "#888888" },
+    TOOLBOX: { INPUT: "#147d52", EXIT: "#b45309", WIRE: "#1d4ed8", BLOCK: "#6b7280", GATE: "#7e22ce" },
 };
+
+// Keep the canvas colors alongside the existing game dimensions and colors.
+export const COLOR_PRESETS = {
+    light: lightColors,
+    dark: {
+        UI: { BACKGROUND: "#343a40" },
+        GATE: { TEXT: "#f1f3f5", BACKGROUND: "#49515b", BORDER: "#f1f3f5" },
+        WIRE: { BACKGROUND: "#f1f3f5", POWERED: "#ff4500", ELECTRICITY: "#ffcc00" },
+        BUTTON: { TEXT: "#f1f3f5", BACKGROUND: "#49515b", BORDER: "#f1f3f5" },
+        GRID: { BACKGROUND: "#212529", STROKE: "#adb5bd" },
+        BLOCK: { BACKGROUND: "#6c757d" },
+        TOOLBOX: { INPUT: "#75d6a6", EXIT: "#ffba75", WIRE: "#91baff", BLOCK: "#c5cbd3", GATE: "#d4a5ff" },
+    },
+};
+
+export let COLORS = COLOR_PRESETS.light;
+
+export function setBoardColors(theme: "light" | "dark"): void {
+    COLORS = COLOR_PRESETS[theme];
+}

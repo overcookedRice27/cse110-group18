@@ -35,6 +35,11 @@ const miniGameBackBtn = document.getElementById("mini-game-back-btn") as HTMLBut
 levelCreatorBtn.hidden = !LEVEL_CREATOR_ENABLED;
 initOptions();
 
+// Opening Settings should show the options even if Help was selected last time.
+document.getElementById("how-to-play-modal")?.addEventListener("show.bs.modal", () => {
+    document.getElementById("options-tab")?.click();
+});
+
 function refreshMenu(): void {
     //new
     continueBtn.hidden = !hasProgress(); //if theres progress button hidden, no progress button present

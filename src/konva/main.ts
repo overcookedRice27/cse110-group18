@@ -1,5 +1,5 @@
 import Konva from "konva";
-import { isCreatorView, setCreatorView, STAGE } from "./constants";
+import { isCreatorView, setCreatorView, setBoardColors, STAGE } from "./constants";
 import { createButton } from "./button";
 import { createLevelResults, LEVEL_RESULTS_EVENTS, type LevelResultSummary } from "./level-results";
 import { drawGridLayer as createGridLayer } from "./grid";
@@ -17,8 +17,22 @@ import { checkCircuit } from "./wire";
 import { useSpecialAbility, getCharge, increaseCharge, setCharge } from "./specialAbility";
 import { getCircuitHint } from "./circuitHints";
 import { getLevel, LEVEL_COUNT } from "../levels/registry";
-import { archiveMetadata, signalLevelMetadata, getLevelMetadata } from "../levels/level-metadata";
+import {
+    archiveMetadata,
+    signalLevelMetadata,
+    getLevelMetadata,
+} from "../levels/level-metadata";
 import { createFinale, FINALE_CLEARED } from "../levels/summary";
+import { setupWirePlacement } from "./wirePlacement";
+import { setupGameTutorial } from "./gameTutorial";
+import { applyBoardTheme } from "./boardTheme";
+
+// Options are initialized by the menu before this stage is loaded.
+setBoardColors(
+    document.documentElement.getAttribute("data-bs-theme") === "dark"
+        ? "dark"
+        : "light"
+);
 
 const stage = new Konva.Stage({
     container: "game-screen",
@@ -34,6 +48,18 @@ grid.y(50);
 stage.add(grid);
 const levelResults = createLevelResults();
 stage.add(levelResults);
+
+const closeTutorial = document.getElementById("game-how-to-btn")
+    ? setupGameTutorial(stage, grid)
+    : () => {};
+
+document.addEventListener("game-theme-changed", (event) => {
+    const theme = (event as CustomEvent).detail;
+    if (theme === "light" || theme === "dark") {
+        applyBoardTheme(stage, theme);
+    }
+});
+
 const finale = createFinale();
 stage.add(finale);
 
@@ -50,6 +76,8 @@ let activeRequiredGates: GateRequirements | undefined;
 let creatorRequiredGates: GateRequirements | undefined;
 const saveButton = document.getElementById("level-save-btn") as HTMLButtonElement;
 const resetButton = document.getElementById("reset-level-btn") as HTMLButtonElement;
+const placeWiresButton = document.getElementById("place-wires-btn") as HTMLButtonElement | null;
+const clearWireSelection = placeWiresButton ? setupWirePlacement(stage, grid, placeWiresButton) : () => {};
 const saveStatus = document.getElementById("level-save-status") as HTMLElement;
 const requirementsMenu = document.getElementById("gate-requirements-menu") as HTMLDetailsElement;
 const requirementsError = document.getElementById("gate-requirements-error") as HTMLElement;
@@ -111,7 +139,11 @@ function clearCircuitStatus(): void {
     circuitStatus.style.color = "";
 }
 
-document.getElementById("game-back-btn")!.addEventListener("click", clearCircuitStatus);
+document.getElementById("game-back-btn")!.addEventListener("click", () => {
+    clearCircuitStatus();
+    clearWireSelection();
+    closeTutorial();
+});
 document.addEventListener("circuitchanged", clearCircuitStatus);
 
 resetButton.addEventListener("click", () => {
@@ -232,6 +264,7 @@ stage.on("levelExitPowered", () =>
 {
     if (!isCreatorView && activeLevelId !== null)
     {
+        closeTutorial();
         const previousProgress = getHighestCompleted();
 
         completeLevel(activeLevelId);
@@ -280,6 +313,8 @@ let openCreator: () => void;
 // Load a selected layout into the shared stage in player mode.
 export async function showPlayerLevel(level: LevelData): Promise<void>
 {
+    closeTutorial();
+    clearWireSelection();
     clearCircuitStatus();
     // End the previous visit before loading; failed loads must not start a new timer.
     signalLevelMetadata({ type: "stop" });
@@ -311,6 +346,8 @@ export async function showPlayerLevel(level: LevelData): Promise<void>
 // Return the shared stage to its existing creator view and board.
 export function showLevelCreator(): void
 {
+    closeTutorial();
+    clearWireSelection();
     clearCircuitStatus();
     // Creator previews do not contribute to player metadata.
     signalLevelMetadata({ type: "stop" });
@@ -403,6 +440,7 @@ if (isCreatorView) {
             if (!readCreatorRequirements()) return;
             creatorLevel = getLevelData(levelId, creatorRequiredGates);
         }
+        closeTutorial();
         clearCircuitStatus();
         setCreatorView(!isCreatorView);
         if (isCreatorView && creatorLevel) {
