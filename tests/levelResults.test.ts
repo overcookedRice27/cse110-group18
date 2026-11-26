@@ -56,6 +56,22 @@ describe("level results submenu", () => {
         results.destroy();
     });
 
+    it("shows a light blue personal-best message only for an improved clear", () => {
+        const results = createLevelResults();
+        const badge = results.findOne(".resultsPersonalBest")!;
+        const summary = { timeSpentMs: 1000, incorrectValidations: 0 };
+        results.fire(LEVEL_RESULTS_EVENTS.CLEARED, { summary: { ...summary, newPersonalBest: true } });
+        expect(badge.visible()).toBe(true);
+        expect(badge.findOne("Text")?.getAttrs()).toMatchObject({
+            text: "new personal best!",
+            fill: "#ADD8E6",
+        });
+        results.fire(LEVEL_RESULTS_EVENTS.CLEARED, { summary });
+        expect(badge.visible()).toBe(false);
+        results.hide();
+        results.destroy();
+    });
+
     // Cover Exit and Continue with both mouse clicks and touch taps. Each action
     // must bubble its matching navigation event exactly once to the stage, hide
     // the popup, and restore the default cursor for the destination screen.

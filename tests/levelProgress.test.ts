@@ -85,6 +85,32 @@ describe("player completion persistence", () => {
         expect(document.getElementById("level-save-status")!.textContent).toContain("Select Save");
     });
 
+    it.each([
+        { savedProgress: 1, sessionProgress: 0, wasCleared: true },
+        { savedProgress: 0, sessionProgress: 1, wasCleared: true },
+        { savedProgress: 0, sessionProgress: 0, wasCleared: false },
+    ])("restores a saved board only if the level is unfinished ($savedProgress saved, $sessionProgress in session)", async ({
+        savedProgress, sessionProgress, wasCleared,
+    }) => {
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const { getLevel } = await import("../src/levels/registry");
+        const { loadLevel } = await import("../src/konva/levels/loadLevel");
+        const { importLevel } = await import("../src/konva/levels/importLevel");
+        const { restoreProgress } = await import("../src/html/levels");
+        const { saveLevel } = await import("../src/konva/save");
+        const savedBoard = { id: 1, pieces: [] };
+        restoreProgress(sessionProgress);
+        saveLevel(savedBoard, savedProgress);
+        const previousSave = localStorage.getItem("logicGame.save");
+        vi.mocked(importLevel).mockClear();
+
+        await showPlayerLevel(savedBoard);
+
+        expect(loadLevel).toHaveBeenLastCalledWith(expect.anything(), wasCleared ? getLevel(1) : savedBoard);
+        expect(importLevel).toHaveBeenCalledTimes(wasCleared ? 0 : 1);
+        expect(localStorage.getItem("logicGame.save")).toBe(previousSave);
+    });
+
     it("keeps the board when the player cancels reset", async () => {
         const { showPlayerLevel, showLevelCreator } = await import("../src/konva/main");
         const { loadLevel } = await import("../src/konva/levels/loadLevel");
@@ -171,6 +197,36 @@ describe("player completion persistence", () => {
             level: { id: 1, requiredGates: { AND: 2 } },
         });
     });
+    it("appends completion snapshots to an older save and preserves them on manual save", async () => {
+        const level = { id: 1, pieces: [] };
+        localStorage.setItem("logicGame.save", JSON.stringify({ version: 1, highestCompleted: 0, level }));
+        const { showPlayerLevel } = await import("../src/konva/main");
+        const { loadSavedLevel } = await import("../src/konva/save");
+        const requirements = await import("../src/konva/levels/checkRequiredGates");
+        vi.spyOn(requirements, "missingRequiredGates").mockReturnValueOnce(["AND (1/2)"]);
+        const now = vi.spyOn(performance, "now").mockReturnValue(100);
+        await showPlayerLevel(level);
+
+        const validate = document.getElementById("validate-circuit-btn")!;
+        now.mockReturnValue(200);
+        validate.click();
+        now.mockReturnValue(350);
+        validate.click();
+        await showPlayerLevel(level);
+        now.mockReturnValue(650);
+        validate.click();
+        await showPlayerLevel(level);
+        document.getElementById("level-save-btn")!.click();
+        expect(document.getElementById("level-save-status")!.textContent).toBe("Level saved.");
+
+        expect(loadSavedLevel()?.archivedMetadata).toEqual([
+            { levelId: 1, timeSpentMs: 100, correctValidations: 1, incorrectValidations: 1,
+                bestTimeMs: 250, best_attempt_count: 2 },
+            { levelId: 1, timeSpentMs: 300, correctValidations: 2, incorrectValidations: 1,
+                bestTimeMs: 250, best_attempt_count: 1 },
+        ]);
+    });
+
     // An unpowered exit must fail validation without writing to storage or marking
     // the level complete. Check both a fresh game and preservation of an older save.
     // false: fail Level 1 with no save; true: fail Level 2 after saving Level 1.
