@@ -16,8 +16,10 @@ vi.mock("../src/konva/level-results", async (importOriginal) => {
 });
 vi.mock("../src/konva/grid", () => ({ drawGridLayer: () => new Konva.Group() }));
 vi.mock("../src/konva/button", () => ({ createButton: vi.fn(() => new Konva.Group()) }));
-vi.mock("../src/konva/levels/creatorPanel", () => ({ createCreatorPanel: () => new Konva.Group() }));
-vi.mock("../src/konva/levels/loadLevel", () => ({
+vi.mock("../src/konva/levels/creatorPanel", () => ({
+    createCreatorPanel: () => new Konva.Group(),
+    bindTrashHighlight: vi.fn(),
+}));vi.mock("../src/konva/levels/loadLevel", () => ({
     loadLevel: vi.fn((grid: Konva.Group) => grid.add(new Konva.Group({ elementType: "exit", powered: true }))),
 }));
 // Saved-board geometry is outside these tests; only completion and level IDs matter.
